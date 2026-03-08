@@ -20,6 +20,7 @@ Rejestr zadań projektowych. Status: `[ ]` otwarte · `[x]` ukończone · `[~]` 
 - [x] Scraping Łódź, Poznań, Świnoujście
 - [x] Naprawa slugu Świnoujścia (`swinoujscie` → `swinoujscie-h`)
 - [x] Skill Claude Code (`adresowo-scraper`) z pełnym kontekstem projektowym
+- [x] Eksport danych do JSON, Markdown, XLSX i PDF z checkboxami do selekcji rekordów
 
 ---
 
@@ -35,7 +36,7 @@ Rejestr zadań projektowych. Status: `[ ]` otwarte · `[x]` ukończone · `[~]` 
 
 - [ ] **Więcej miast** — Gdańsk, Wrocław, Kraków, Warszawa (weryfikacja slugów wymagana)
 - [ ] **Wykres cen** w dashboardzie — histogram rozkładu cen per dzielnica
-- [ ] **Eksport filtrowanych danych** z dashboardu do CSV
+- [x] ~~Eksport filtrowanych danych z dashboardu do CSV~~ → zrealizowano jako JSON/MD/XLSX/PDF
 - [ ] **Porównanie miast** w zakładce Statystyki — zestawienie avg cena/m² per miasto
 - [ ] **Automatyczny re-scraping** — GitHub Actions workflow uruchamiający scraper co tydzień
 - [ ] **Cache po stronie API** — unikanie wielokrotnego czytania CSV przy każdym żądaniu

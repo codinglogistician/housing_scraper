@@ -8,7 +8,10 @@ Scraper ogłoszeń mieszkaniowych z portalu [adresowo.pl](https://adresowo.pl) z
 - Automatyczna deduplikacja ogłoszeń między stronami paginacji
 - Zapis danych do CSV (utf-8-sig, kompatybilny z Excelem)
 - REST API (FastAPI) serwujące dane i uruchamiające testy
-- Dashboard SPA: tabela z filtrowaniem, statystyki dzielnic, test runner
+- Dashboard SPA: tabela z filtrowaniem, sortowaniem i paginacją, statystyki dzielnic, test runner
+- Eksport danych do JSON, Markdown, XLSX i PDF (z nagłówkiem raportu zawierającym aktywne filtry)
+- Selekcja rekordów checkboxami — eksport obejmuje zaznaczone lub wszystkie przefiltrowane
+- Przelicznik ceny mieszkania na kebaby, hot-dogi i piwa (popup przy każdym ogłoszeniu)
 - 42 testy jednostkowe parsera HTML
 
 ## Struktura projektu
@@ -64,7 +67,7 @@ pytest test_parser.py -v
 |---|---|
 | Scraper | `requests`, `BeautifulSoup4`, `lxml` |
 | Backend | `FastAPI`, `Uvicorn`, `Pydantic` |
-| Frontend | HTML/CSS/JS (bez frameworków) |
+| Frontend | HTML/CSS/JS (bez frameworków), SheetJS (XLSX), jsPDF (PDF) |
 | Testy | `pytest` |
 | Dane | CSV (`utf-8-sig`) |
 

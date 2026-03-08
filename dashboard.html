@@ -6,6 +6,9 @@
 <title>ADRESOWO — Scraper Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 /* ─── TOKENS ─────────────────────────────────────────────────── */
 :root {
@@ -615,6 +618,77 @@ th:nth-child(7), td:nth-child(7) { width: auto; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
+/* ─── EXPORT BAR ─────────────────────────────────────────────── */
+#export-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+#export-bar .export-label {
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+#sel-info {
+  font-size: 10px;
+  color: var(--amber);
+  font-family: var(--mono);
+  margin-left: 4px;
+  min-width: 100px;
+}
+.btn-export {
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.btn-export:hover { background: var(--bg2); color: var(--text); border-color: var(--text3); }
+.btn-export.json  { color: #f0b429; border-color: #f0b42940; }
+.btn-export.json:hover  { background: #f0b42912; border-color: var(--amber); }
+.btn-export.md    { color: #06b6d4; border-color: #06b6d440; }
+.btn-export.md:hover    { background: #06b6d412; border-color: var(--cyan); }
+.btn-export.xlsx  { color: #22c55e; border-color: #22c55e40; }
+.btn-export.xlsx:hover  { background: #22c55e12; border-color: var(--green); }
+.btn-export.pdf   { color: #ef4444; border-color: #ef444440; }
+.btn-export.pdf:hover   { background: #ef444412; border-color: var(--red); }
+.btn-sel-clear {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-family: var(--mono);
+}
+.btn-sel-clear:hover { color: var(--red); }
+
+/* ─── CHECKBOXY W TABELI ─────────────────────────────────────── */
+.cb-col { width: 32px; text-align: center !important; padding: 0 4px !important; }
+input[type=checkbox].row-cb {
+  accent-color: var(--amber);
+  width: 13px; height: 13px;
+  cursor: pointer;
+}
+input[type=checkbox]#cb-all {
+  accent-color: var(--amber);
+  width: 13px; height: 13px;
+  cursor: pointer;
+}
+tr.selected td { background: var(--amber-dim) !important; }
+
 /* ─── PRZELICZNIK MODAL ───────────────────────────────────────── */
 #przelicz-overlay {
   display: none;
@@ -860,10 +934,20 @@ th:nth-child(7), td:nth-child(7) { width: auto; }
         <input type="text" id="search-global" placeholder="Szukaj..." oninput="applyFilters()">
         <div class="sort-indicator" id="sort-info">Sortowanie: —</div>
       </div>
+      <div id="export-bar">
+        <span class="export-label">Eksport</span>
+        <button class="btn-export json" onclick="eksportuj('json')">⬇ JSON</button>
+        <button class="btn-export md"   onclick="eksportuj('md')">⬇ Markdown</button>
+        <button class="btn-export xlsx" onclick="eksportuj('xlsx')">⬇ XLSX</button>
+        <button class="btn-export pdf"  onclick="eksportuj('pdf')">⬇ PDF</button>
+        <span id="sel-info"></span>
+        <button class="btn-sel-clear" id="btn-clear-sel" onclick="clearSelection()" style="display:none">✕ odznacz wszystkie</button>
+      </div>
       <div id="table-wrap">
         <table>
           <thead>
             <tr>
+              <th class="cb-col"><input type="checkbox" id="cb-all" title="Zaznacz/odznacz wszystkie na stronie" onchange="selectAllPage(this.checked)"></th>
               <th onclick="sortBy('id')">ID <span class="sort-arrow" id="s-id"></span></th>
               <th onclick="sortBy('locality')">Dzielnica <span class="sort-arrow" id="s-locality"></span></th>
               <th onclick="sortBy('rooms')">Pok. <span class="sort-arrow" id="s-rooms"></span></th>
@@ -948,6 +1032,7 @@ th:nth-child(7), td:nth-child(7) { width: auto; }
 ══════════════════════════════════════════════════════════════════ */
 let allData = [];
 let filteredData = [];
+let selectedIds = new Set();
 let currentPage = 1;
 let pageSize = 50;
 let totalPages = 1;
@@ -1129,10 +1214,15 @@ function renderTable() {
 
   const tbody = document.getElementById('tbody');
   if (page.length === 0) {
-    tbody.innerHTML = '<tr id="empty-row"><td colspan="7">Brak wyników dla podanych filtrów</td></tr>';
+    tbody.innerHTML = '<tr id="empty-row"><td colspan="8">Brak wyników dla podanych filtrów</td></tr>';
   } else {
-    tbody.innerHTML = page.map(r => `
-      <tr>
+    tbody.innerHTML = page.map(r => {
+      const rid = String(r.id ?? '');
+      const checked = selectedIds.has(rid) ? 'checked' : '';
+      const selClass = selectedIds.has(rid) ? ' selected' : '';
+      return `
+      <tr class="${selClass}">
+        <td class="cb-col"><input type="checkbox" class="row-cb" data-id="${rid}" ${checked} onchange="toggleSelectRow(this)"></td>
         <td>${r.id ?? '—'}</td>
         <td class="locality">${r.locality ?? '—'}</td>
         <td class="num">${r.rooms ?? '—'}</td>
@@ -1143,7 +1233,8 @@ function renderTable() {
           <a href="${r.url}" target="_blank" title="${r.url}">↗ otwórz</a>
           <button class="btn-przelicz" data-cena="${r.price_total_zl ?? ''}" data-loc="${(r.locality ?? '').replace(/"/g, '&quot;')}" onclick="otworzPrzelicznik(this)">Przelicz</button>
         </td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
   }
 
   document.getElementById('pg-label').textContent =
@@ -1152,6 +1243,7 @@ function renderTable() {
   document.getElementById('pg-prev').disabled  = currentPage <= 1;
   document.getElementById('pg-next').disabled  = currentPage >= totalPages;
   document.getElementById('pg-last').disabled  = currentPage >= totalPages;
+  updateSelectionUI();
 }
 
 function goPage(n) {
@@ -1498,6 +1590,209 @@ function toggleTheme() {
     html.dataset.theme = 'dark';
     btn.textContent = '☾ Dark';
   }
+}
+
+/* ─── CHECKBOXY I SELEKCJA ────────────────────────────────────── */
+function toggleSelectRow(cb) {
+  const id = cb.dataset.id;
+  if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+  cb.closest('tr').classList.toggle('selected', cb.checked);
+  updateSelectionUI();
+}
+
+function selectAllPage(checked) {
+  const start = (currentPage - 1) * pageSize;
+  const page  = filteredData.slice(start, start + pageSize);
+  page.forEach(r => {
+    const id = String(r.id ?? '');
+    if (checked) selectedIds.add(id); else selectedIds.delete(id);
+  });
+  renderTable();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  renderTable();
+}
+
+function updateSelectionUI() {
+  const n = selectedIds.size;
+  const info = document.getElementById('sel-info');
+  const btn  = document.getElementById('btn-clear-sel');
+  if (n > 0) {
+    info.textContent = `Zaznaczono: ${n} (eksport obejmie zaznaczone)`;
+    btn.style.display = '';
+  } else {
+    info.textContent = '';
+    btn.style.display = 'none';
+  }
+  // stan checkboxa "zaznacz stronę"
+  const cbAll = document.getElementById('cb-all');
+  if (!cbAll) return;
+  const start = (currentPage - 1) * pageSize;
+  const page  = filteredData.slice(start, start + pageSize);
+  const allChecked = page.length > 0 && page.every(r => selectedIds.has(String(r.id ?? '')));
+  cbAll.checked = allChecked;
+  cbAll.indeterminate = !allChecked && page.some(r => selectedIds.has(String(r.id ?? '')));
+}
+
+/* ─── EKSPORT ─────────────────────────────────────────────────── */
+function getExportData() {
+  if (selectedIds.size > 0) {
+    return filteredData.filter(r => selectedIds.has(String(r.id ?? '')));
+  }
+  return filteredData;
+}
+
+function buildExportMeta() {
+  const meta = { miasto: currentCity };
+  const filtry = [];
+  const loc = document.getElementById('f-locality').value.trim();
+  if (loc) filtry.push(`Lokalizacja: ${loc}`);
+  const rMin = document.getElementById('f-rooms-min').value;
+  const rMax = document.getElementById('f-rooms-max').value;
+  if (rMin) filtry.push(`Pokoje min: ${rMin}`);
+  if (rMax) filtry.push(`Pokoje max: ${rMax}`);
+  const aMin = document.getElementById('f-area-min').value;
+  const aMax = document.getElementById('f-area-max').value;
+  if (aMin) filtry.push(`Powierzchnia min: ${aMin} m²`);
+  if (aMax) filtry.push(`Powierzchnia max: ${aMax} m²`);
+  const pMin = document.getElementById('f-price-min').value;
+  const pMax = document.getElementById('f-price-max').value;
+  if (pMin) filtry.push(`Cena min: ${parseInt(pMin).toLocaleString('pl-PL')} zł`);
+  if (pMax) filtry.push(`Cena max: ${parseInt(pMax).toLocaleString('pl-PL')} zł`);
+  const sMin = document.getElementById('f-sqm-min').value;
+  const sMax = document.getElementById('f-sqm-max').value;
+  if (sMin) filtry.push(`Cena/m² min: ${sMin} zł`);
+  if (sMax) filtry.push(`Cena/m² max: ${sMax} zł`);
+  const glob = document.getElementById('search-global').value.trim();
+  if (glob) filtry.push(`Szukaj: ${glob}`);
+  meta.filtry = filtry;
+  meta.rekordow = getExportData().length;
+  meta.wygenerowano = new Date().toLocaleString('pl-PL');
+  return meta;
+}
+
+function pobierzNazwePliku(ext) {
+  const d = new Date().toISOString().slice(0,10);
+  return `adresowo_${currentCity}_${d}.${ext}`;
+}
+
+function eksportuj(format) {
+  const data = getExportData();
+  const meta = buildExportMeta();
+  if (format === 'json') eksportJSON(data, meta);
+  else if (format === 'md') eksportMD(data, meta);
+  else if (format === 'xlsx') eksportXLSX(data, meta);
+  else if (format === 'pdf') eksportPDF(data, meta);
+}
+
+function pobierzBlob(content, type, nazwa) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = nazwa;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function eksportJSON(data, meta) {
+  const payload = { meta, dane: data };
+  pobierzBlob(JSON.stringify(payload, null, 2), 'application/json', pobierzNazwePliku('json'));
+}
+
+function eksportMD(data, meta) {
+  const linie = [];
+  linie.push(`# Raport ogłoszeń — ${meta.miasto.toUpperCase()}`);
+  linie.push(`\n**Wygenerowano:** ${meta.wygenerowano}  `);
+  linie.push(`**Rekordów:** ${meta.rekordow}`);
+  if (meta.filtry.length) {
+    linie.push('\n## Aktywne filtry\n');
+    meta.filtry.forEach(f => linie.push(`- ${f}`));
+  }
+  linie.push('\n## Dane\n');
+  linie.push('| ID | Dzielnica | Pokoje | m² | Cena (zł) | zł/m² | URL |');
+  linie.push('|---|---|---|---|---|---|---|');
+  data.forEach(r => {
+    const fmt = v => v !== null && v !== undefined ? v.toLocaleString('pl-PL') : '—';
+    linie.push(`| ${r.id ?? '—'} | ${r.locality ?? '—'} | ${r.rooms ?? '—'} | ${r.area_m2 !== null ? r.area_m2.toFixed(1) : '—'} | ${fmt(r.price_total_zl)} | ${fmt(r.price_per_m2_zl)} | ${r.url ?? '—'} |`);
+  });
+  pobierzBlob(linie.join('\n'), 'text/markdown;charset=utf-8', pobierzNazwePliku('md'));
+}
+
+function eksportXLSX(data, meta) {
+  const wb = XLSX.utils.book_new();
+  // Arkusz: nagłówek metadanych
+  const metaRows = [
+    ['Miasto', meta.miasto],
+    ['Wygenerowano', meta.wygenerowano],
+    ['Rekordów', meta.rekordow],
+  ];
+  if (meta.filtry.length) {
+    metaRows.push(['Filtry', '']);
+    meta.filtry.forEach(f => metaRows.push(['', f]));
+  }
+  const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
+  XLSX.utils.book_append_sheet(wb, wsMeta, 'Info');
+  // Arkusz: dane
+  const wiersze = data.map(r => ({
+    ID: r.id ?? '',
+    Dzielnica: r.locality ?? '',
+    Pokoje: r.rooms ?? '',
+    'm²': r.area_m2 ?? '',
+    'Cena (zł)': r.price_total_zl ?? '',
+    'zł/m²': r.price_per_m2_zl ?? '',
+    URL: r.url ?? '',
+  }));
+  const wsData = XLSX.utils.json_to_sheet(wiersze);
+  // Szerokości kolumn
+  wsData['!cols'] = [8,24,8,8,14,10,50].map(w => ({ wch: w }));
+  XLSX.utils.book_append_sheet(wb, wsData, 'Ogłoszenia');
+  XLSX.writeFile(wb, pobierzNazwePliku('xlsx'));
+}
+
+function eksportPDF(data, meta) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  // Nagłówek
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text(`Raport ogłoszeń — ${meta.miasto.toUpperCase()}`, 14, 16);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text(`Wygenerowano: ${meta.wygenerowano}   |   Rekordów: ${meta.rekordow}`, 14, 22);
+  let y = 27;
+  if (meta.filtry.length) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Aktywne filtry:', 14, y); y += 5;
+    doc.setFont('helvetica', 'normal');
+    meta.filtry.forEach(f => { doc.text(`• ${f}`, 18, y); y += 4; });
+    y += 2;
+  }
+  // Tabela
+  const cols = ['ID','Dzielnica','Pok.','m²','Cena (zł)','zł/m²','URL'];
+  const rows = data.map(r => {
+    const fmt = v => v !== null && v !== undefined ? v.toLocaleString('pl-PL') : '—';
+    return [
+      r.id ?? '—',
+      r.locality ?? '—',
+      r.rooms ?? '—',
+      r.area_m2 !== null ? r.area_m2.toFixed(1) : '—',
+      fmt(r.price_total_zl),
+      fmt(r.price_per_m2_zl),
+      r.url ?? '—',
+    ];
+  });
+  doc.autoTable({
+    head: [cols],
+    body: rows,
+    startY: y,
+    styles: { fontSize: 7, cellPadding: 1.5 },
+    headStyles: { fillColor: [30, 36, 50], textColor: [200, 216, 232], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [245, 247, 250] },
+    columnStyles: { 6: { cellWidth: 60 } },
+    margin: { left: 14, right: 14 },
+  });
+  doc.save(pobierzNazwePliku('pdf'));
 }
 
 /* ─── PRZELICZNIK ─────────────────────────────────────────────── */

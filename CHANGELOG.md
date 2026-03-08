@@ -7,6 +7,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/)
 ## [Unreleased]
 
 ### Dodano
+- Eksport danych do JSON, Markdown, XLSX i PDF — przycisk w pasku nad tabelą; eksportuje zaznaczone rekordy (jeśli są) lub wszystkie przefiltrowane; nagłówek raportu zawiera miasto i aktywne filtry
+- Checkboxy przy każdym wierszu tabeli — zaznaczenie ≥1 rekordu ogranicza eksport do wybranych pozycji; checkbox w nagłówku zaznacza/odznacza całą bieżącą stronę
 - Przelicznik ceny mieszkania — przycisk "Przelicz" obok każdego ogłoszenia otwiera popup z przeliczeniem ceny na kebaby (÷35 zł), hot-dogi Żabka (÷8,50 zł) i piwa Żabka (÷4,65 zł)
 
 ### Planowane
