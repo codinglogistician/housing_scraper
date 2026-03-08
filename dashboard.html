@@ -1141,7 +1141,7 @@ function renderTable() {
         <td class="num">${fmt(r.price_per_m2_zl)}</td>
         <td class="link">
           <a href="${r.url}" target="_blank" title="${r.url}">↗ otwórz</a>
-          <button class="btn-przelicz" onclick="otworzPrzelicznik(${r.price_total_zl}, ${JSON.stringify(r.locality ?? '')})">Przelicz</button>
+          <button class="btn-przelicz" data-cena="${r.price_total_zl ?? ''}" data-loc="${(r.locality ?? '').replace(/"/g, '&quot;')}" onclick="otworzPrzelicznik(this)">Przelicz</button>
         </td>
       </tr>`).join('');
   }
@@ -1501,7 +1501,9 @@ function toggleTheme() {
 }
 
 /* ─── PRZELICZNIK ─────────────────────────────────────────────── */
-function otworzPrzelicznik(cena, lokalizacja) {
+function otworzPrzelicznik(btn) {
+  const cena      = parseFloat(btn.dataset.cena);
+  const lokalizacja = btn.dataset.loc;
   if (!cena) return;
   document.getElementById('pm-locality').textContent = lokalizacja || '—';
   document.getElementById('pm-price').textContent    = cena.toLocaleString('pl-PL') + ' zł';
