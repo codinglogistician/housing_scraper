@@ -7,6 +7,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/)
 ## [Unreleased]
 
 ### Dodano
+- **Kalkulator wolności finansowej** — modal z inputem pensji i sliderem oszczędności (10–30%), oblicza lata do zakupu dla zaznaczonego ogłoszenia lub mediany widoku; animowany pasek + humorystyczny komentarz
+- **Ranking absurdu** — przycisk w statusbarze; modal z TOP 3 najdroższych i najtańszych ogłoszeń z filteredData, każdy rekord z losowanym żartobliwym komentarzem z puli 10 tekstów
+- **Histogram cen** — canvas w zakładce Statystyki; 10 kubełków cenowych, słupki amber, interaktywny tooltip z zakresem i liczbą ogłoszeń; odświeżany przy każdej zmianie filtrów
+- **Heatmapa dzielnic** — kolumna Śr. zł/m² w tabeli dzielnic kolorowana gradientem zielony→czerwony w zależności od wartości względem min/max
+- **Znajdź podobne** — przycisk `~` przy każdym ogłoszeniu; modal z 5 podobnymi rekordami (ta sama dzielnica LUB ±15% cena i ±15% m²)
+- **Porównywarka** — gdy zaznaczono 2–4 checkboxy, pojawia się przycisk `⚖ Porównaj`; modal z tabelą wiersze×kolumny, podświetlenie najlepszej (zielony) i najgorszej (czerwony) wartości w każdym polu
+- **Mój budżet** — tryb uproszczony: toggle zwija sidebar do jednego suwaka budżetu max (50k–2M zł), live filtruje dane
+- **Widok kartek** — przełącznik ⊞/☰ w statusbarze; CSS grid kart (3/2/1 kolumn) z ceną amber, dzielnicą cyan, linkiem i Przelicz
+- **Animowany licznik wyników** — zmiana liczby wyników animowana przez 400ms via requestAnimationFrame (bez animacji gdy Δ<5)
 - Eksport danych do JSON, Markdown, XLSX i PDF — przycisk w pasku nad tabelą; eksportuje zaznaczone rekordy (jeśli są) lub wszystkie przefiltrowane; nagłówek raportu zawiera miasto i aktywne filtry
 - Checkboxy przy każdym wierszu tabeli — zaznaczenie ≥1 rekordu ogranicza eksport do wybranych pozycji; checkbox w nagłówku zaznacza/odznacza całą bieżącą stronę
 - Przelicznik ceny mieszkania — przycisk "Przelicz" obok każdego ogłoszenia otwiera popup z przeliczeniem ceny na kebaby (÷35 zł), hot-dogi Żabka (÷8,50 zł) i piwa Żabka (÷4,65 zł)
@@ -16,8 +25,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/)
 - Walidacja slugu przed scrapingiem (sprawdzenie redirect HTTP)
 - Obsługa HTTP 429 z exponential backoff
 - Więcej miast: Gdańsk, Wrocław, Kraków, Warszawa
-- Wykres rozkładu cen w dashboardzie
-- Eksport filtrowanych danych z dashboardu do CSV
+- Alert cenowy (powiadomienie przy nowych ogłoszeniach spełniających kryteria)
+- Sparkline trendu cen per dzielnica (wymaga cyklicznego scrapingu)
 - Testy integracyjne API (httpx + pytest-asyncio)
 
 ---

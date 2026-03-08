@@ -802,9 +802,234 @@ tr.selected td { background: var(--amber-dim) !important; }
   background: var(--amber-dim);
   border-color: var(--amber);
 }
+
+/* ─── NOWE PRZYCISKI TOPBAR / STATUSBAR ──────────────────────── */
+.btn-topbar {
+  background: none; border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text2); cursor: pointer; padding: 4px 10px; font-family: var(--mono);
+  font-size: 11px; transition: all .15s; white-space: nowrap;
+}
+.btn-topbar:hover { border-color: var(--amber); color: var(--amber); }
+
+.btn-statusbar {
+  background: none; border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text2); cursor: pointer; padding: 2px 8px; font-family: var(--mono);
+  font-size: 10px; transition: all .15s; white-space: nowrap;
+}
+.btn-statusbar:hover { border-color: var(--amber); color: var(--amber); }
+.btn-statusbar.active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+
+/* ─── GENERYCZNY OVERLAY ──────────────────────────────────────── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: #00000088;
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 2rem 2.5rem;
+  max-width: 560px;
+  width: 92%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 60px #00000090;
+  animation: modalIn .2s ease;
+  position: relative;
+}
+.modal-box.wide { max-width: 740px; }
+.modal-close {
+  position: absolute; top: .75rem; right: 1rem;
+  background: none; border: none;
+  color: var(--text2); font-size: 1.3rem; cursor: pointer; line-height: 1;
+}
+.modal-close:hover { color: var(--text); }
+.modal-title {
+  font-family: var(--sans); font-size: .75rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--amber); margin-bottom: 1.25rem;
+}
+.modal-subtitle {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text3); margin: 1rem 0 .5rem;
+  border-top: 1px solid var(--border); padding-top: .75rem;
+}
+.modal-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.modal-table th { background: var(--bg3); padding: 5px 8px; text-align: left;
+  font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); }
+.modal-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); }
+.modal-table tr:last-child td { border-bottom: none; }
+.modal-table .num { text-align: right; color: var(--amber2); font-weight: 500; }
+.modal-comment { font-size: 10px; color: var(--text3); font-style: italic; }
+
+/* ─── KALKULATOR WOLNOŚCI FINANSOWEJ ─────────────────────────── */
+#kalkulator-modal .kalk-input-row {
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 1rem;
+}
+#kalkulator-modal .kalk-input-row label {
+  font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em;
+}
+#kalkulator-modal .kalk-lata {
+  font-size: 3rem; font-weight: 700; color: var(--amber2);
+  line-height: 1; margin: .75rem 0 .25rem;
+}
+#kalkulator-modal .kalk-subtitle {
+  font-size: 10px; color: var(--text3); margin-bottom: .75rem;
+}
+#kalkulator-modal .kalk-bar-wrap {
+  background: var(--bg3); border-radius: 4px; height: 10px; overflow: hidden; margin-bottom: .75rem;
+}
+#kalkulator-modal .kalk-bar-fill {
+  height: 100%; background: var(--amber); border-radius: 4px;
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+}
+#kalkulator-modal .kalk-komentarz {
+  font-size: 12px; color: var(--text2); line-height: 1.5;
+  border-top: 1px solid var(--border); padding-top: .75rem; margin-top: .5rem;
+}
+#kalkulator-modal .kalk-for-median {
+  font-size: 10px; color: var(--text3); margin-top: .5rem;
+}
+
+/* ─── HISTOGRAM ───────────────────────────────────────────────── */
+#histogram-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px; position: relative;
+}
+#histogram-wrap .hist-label {
+  font-size: 9px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text3); margin-bottom: 8px;
+}
+#price-histogram { display: block; width: 100%; height: 120px; cursor: crosshair; }
+#hist-tooltip {
+  position: fixed; background: var(--bg4); border: 1px solid var(--border2);
+  border-radius: 4px; padding: 4px 8px; font-size: 10px; color: var(--text);
+  pointer-events: none; white-space: nowrap; z-index: 9998; display: none;
+}
+
+/* ─── WIDOK KART ──────────────────────────────────────────────── */
+#cards-wrap {
+  flex: 1; overflow: auto; display: none;
+  padding: 12px;
+}
+#cards-wrap.active { display: grid; }
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  align-content: start;
+}
+@media (max-width: 900px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .cards-grid { grid-template-columns: 1fr; } }
+.ogloszenie-karta {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 6px;
+  transition: border-color .15s;
+}
+.ogloszenie-karta:hover { border-color: var(--border2); }
+.karta-dzielnica { color: var(--cyan); font-weight: 700; font-size: 12px; }
+.karta-cena { color: var(--amber); font-size: 18px; font-weight: 700; }
+.karta-meta { color: var(--text2); font-size: 10px; }
+.karta-actions { display: flex; gap: 6px; margin-top: 4px; }
+
+/* ─── PORÓWNYWARKA ───────────────────────────────────────────── */
+#btn-porownaj { display: none; }
+.por-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.por-table th { background: var(--bg3); padding: 6px 10px; text-align: right;
+  font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--text3);
+  border-bottom: 1px solid var(--border2); }
+.por-table th:first-child { text-align: left; }
+.por-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: right; }
+.por-table td:first-child { text-align: left; color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.por-table .best { background: var(--green-dim); color: var(--green); font-weight: 700; }
+.por-table .worst { background: var(--red-dim); color: var(--red); }
+
+/* ─── MÓJ BUDŻET ─────────────────────────────────────────────── */
+#budzet-sidebar {
+  display: none; flex-direction: column; gap: 10px; padding: 12px;
+}
+#budzet-sidebar.active { display: flex; }
+#budzet-sidebar .budzet-label {
+  font-size: 10px; color: var(--amber); font-weight: 700; letter-spacing: .06em;
+}
+#budzet-sidebar .budzet-count {
+  font-size: 20px; font-weight: 700; color: var(--text);
+}
+#budzet-sidebar .budzet-sub { font-size: 10px; color: var(--text3); }
+input[type="range"].budzet-slider {
+  width: 100%; accent-color: var(--amber);
+}
 </style>
 </head>
 <body>
+
+<!-- KALKULATOR WOLNOŚCI FINANSOWEJ -->
+<div id="kalkulator-overlay" class="modal-overlay" onclick="zamknijModal('kalkulator-overlay', event)">
+  <div id="kalkulator-modal" class="modal-box">
+    <button class="modal-close" onclick="zamknijModal('kalkulator-overlay')">✕</button>
+    <div class="modal-title">🏦 Kalkulator wolności finansowej</div>
+    <div class="kalk-input-row">
+      <label>Miesięczna pensja netto (zł)</label>
+      <input type="number" id="kalk-pensja" placeholder="5000" min="1000" step="500" oninput="przeliczKalkulator()">
+    </div>
+    <div class="kalk-input-row">
+      <label>Stopień oszczędności: <span id="kalk-procent-label">20%</span></label>
+      <input type="range" id="kalk-procent" min="10" max="30" step="1" value="20"
+             style="width:100%;accent-color:var(--amber)" oninput="aktualizujProcent();przeliczKalkulator()">
+    </div>
+    <div style="margin-top:.5rem">
+      <div class="kalk-lata" id="kalk-lata">—</div>
+      <div class="kalk-subtitle">lat do wolności finansowej</div>
+      <div class="kalk-bar-wrap">
+        <div class="kalk-bar-fill" id="kalk-bar" style="width:0%"></div>
+      </div>
+      <div class="kalk-komentarz" id="kalk-komentarz">Wpisz pensję, żeby zacząć obliczenia.</div>
+      <div class="kalk-for-median" id="kalk-for-median"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RANKING ABSURDU -->
+<div id="absurd-overlay" class="modal-overlay" onclick="zamknijModal('absurd-overlay', event)">
+  <div id="absurd-modal" class="modal-box wide">
+    <button class="modal-close" onclick="zamknijModal('absurd-overlay')">✕</button>
+    <div class="modal-title">🎭 Ranking absurdu</div>
+    <div class="modal-subtitle">TOP 3 NAJDROŻSZE</div>
+    <table class="modal-table" id="absurd-top"></table>
+    <div class="modal-subtitle">TOP 3 NAJTAŃSZE</div>
+    <table class="modal-table" id="absurd-bottom"></table>
+  </div>
+</div>
+
+<!-- ZNAJDŹ PODOBNE -->
+<div id="podobne-overlay" class="modal-overlay" onclick="zamknijModal('podobne-overlay', event)">
+  <div id="podobne-modal" class="modal-box wide">
+    <button class="modal-close" onclick="zamknijModal('podobne-overlay')">✕</button>
+    <div class="modal-title">~ Podobne ogłoszenia</div>
+    <div id="podobne-info" style="font-size:10px;color:var(--text3);margin-bottom:.75rem"></div>
+    <table class="modal-table" id="podobne-table"></table>
+  </div>
+</div>
+
+<!-- PORÓWNYWARKA -->
+<div id="porownaj-overlay" class="modal-overlay" onclick="zamknijModal('porownaj-overlay', event)">
+  <div id="porownaj-modal" class="modal-box wide">
+    <button class="modal-close" onclick="zamknijModal('porownaj-overlay')">✕</button>
+    <div class="modal-title">⚖ Porównywarka ogłoszeń</div>
+    <div style="overflow-x:auto">
+      <table class="por-table" id="por-table"></table>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLTIP HISTOGRAMU -->
+<div id="hist-tooltip"></div>
 
 <!-- PRZELICZNIK MODAL -->
 <div id="przelicz-overlay" onclick="zamknijPrzelicznik(event)">
@@ -859,6 +1084,7 @@ tr.selected td { background: var(--amber-dim) !important; }
     <div class="tick-item"><span class="tick-label">Min cena</span><span class="tick-val" id="t-min-price">—</span></div>
     <div class="tick-item"><span class="tick-label">Max cena</span><span class="tick-val" id="t-max-price">—</span></div>
   </div>
+  <button class="btn-topbar" onclick="otworzKalkulator()">🏦 Kalkulator</button>
   <button id="theme-toggle" onclick="toggleTheme()">☾ Dark</button>
 </div>
 
@@ -925,12 +1151,29 @@ tr.selected td { background: var(--amber-dim) !important; }
         </div>
       </div>
       <button class="btn-reset" onclick="resetFilters()">✕ Wyczyść filtry</button>
+      <button class="btn-reset" id="btn-budzet" onclick="przełączBudżet()" style="border-color:var(--amber);color:var(--amber)">💰 Mój budżet</button>
+    </div>
+
+    <!-- Panel budżetu (zastępuje sidebar gdy aktywny) -->
+    <div id="budzet-sidebar">
+      <div class="budzet-label">💰 Tryb budżetu</div>
+      <div>
+        <label style="font-size:10px;color:var(--text3)">Budżet max: <span id="budzet-val">600 000</span> zł</label>
+        <input type="range" class="budzet-slider" id="budzet-slider"
+               min="50000" max="2000000" step="10000" value="600000"
+               oninput="aktualizujBudżet(this.value)">
+      </div>
+      <div class="budzet-count" id="budzet-count">—</div>
+      <div class="budzet-sub">dostępnych ogłoszeń</div>
+      <button class="btn-reset" onclick="przełączBudżet()" style="margin-top:.5rem">✕ Wyłącz tryb budżetu</button>
     </div>
 
     <!-- Tabela -->
     <div id="main-content">
       <div id="statusbar">
         <div class="status-badge">Wyników: <span id="result-count">—</span> / <span id="total-count">—</span></div>
+        <button class="btn-statusbar" onclick="otworzAbsurd()">🎭 Absurd</button>
+        <button class="btn-statusbar" id="btn-widok" onclick="przełączWidok()">⊞ Karty</button>
         <input type="text" id="search-global" placeholder="Szukaj..." oninput="applyFilters()">
         <div class="sort-indicator" id="sort-info">Sortowanie: —</div>
       </div>
@@ -941,8 +1184,14 @@ tr.selected td { background: var(--amber-dim) !important; }
         <button class="btn-export xlsx" onclick="eksportuj('xlsx')">⬇ XLSX</button>
         <button class="btn-export pdf"  onclick="eksportuj('pdf')">⬇ PDF</button>
         <span id="sel-info"></span>
+        <button class="btn-export" id="btn-porownaj" onclick="otworzPorownywarkę()" style="display:none">⚖ Porównaj zaznaczone</button>
         <button class="btn-sel-clear" id="btn-clear-sel" onclick="clearSelection()" style="display:none">✕ odznacz wszystkie</button>
       </div>
+      <!-- Widok kart -->
+      <div id="cards-wrap">
+        <div class="cards-grid" id="cards-grid"></div>
+      </div>
+
       <div id="table-wrap">
         <table>
           <thead>
@@ -983,6 +1232,11 @@ tr.selected td { background: var(--amber-dim) !important; }
   <div class="panel" id="panel-stats">
     <div id="stats-panel">
       <div class="stats-grid" id="stats-cards"></div>
+      <!-- Histogram cen -->
+      <div id="histogram-wrap">
+        <div class="hist-label">Histogram cen ogłoszeń</div>
+        <canvas id="price-histogram"></canvas>
+      </div>
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
         <table class="district-table">
           <thead>
@@ -1161,8 +1415,12 @@ function applyFilters() {
   if (sortCol) applySort();
   currentPage = 1;
   renderTable();
-  document.getElementById('result-count').textContent = filteredData.length.toLocaleString('pl-PL');
+  animujLicznik('result-count', filteredData.length);
   document.getElementById('total-count').textContent  = allData.length.toLocaleString('pl-PL');
+  drawHistogram(filteredData);
+  if (budzetAktywny) {
+    document.getElementById('budzet-count').textContent = filteredData.length.toLocaleString('pl-PL');
+  }
 }
 
 function resetFilters() {
@@ -1212,6 +1470,19 @@ function renderTable() {
   const page  = filteredData.slice(start, start + pageSize);
   const fmt   = n => n !== null && n !== undefined ? n.toLocaleString('pl-PL') : '—';
 
+  // Widok kart
+  if (viewMode === 'cards') {
+    renderKarty(page);
+    document.getElementById('pg-label').textContent =
+      `Str. ${currentPage} / ${totalPages}  (${start+1}–${Math.min(start+pageSize, filteredData.length)} z ${filteredData.length})`;
+    document.getElementById('pg-first').disabled = currentPage <= 1;
+    document.getElementById('pg-prev').disabled  = currentPage <= 1;
+    document.getElementById('pg-next').disabled  = currentPage >= totalPages;
+    document.getElementById('pg-last').disabled  = currentPage >= totalPages;
+    updateSelectionUI();
+    return;
+  }
+
   const tbody = document.getElementById('tbody');
   if (page.length === 0) {
     tbody.innerHTML = '<tr id="empty-row"><td colspan="8">Brak wyników dla podanych filtrów</td></tr>';
@@ -1232,6 +1503,7 @@ function renderTable() {
         <td class="link">
           <a href="${r.url}" target="_blank" title="${r.url}">↗ otwórz</a>
           <button class="btn-przelicz" data-cena="${r.price_total_zl ?? ''}" data-loc="${(r.locality ?? '').replace(/"/g, '&quot;')}" onclick="otworzPrzelicznik(this)">Przelicz</button>
+          <button class="btn-przelicz" title="Znajdź podobne" onclick="otworzPodobne('${rid}')" style="padding:2px 5px">~</button>
         </td>
       </tr>`;
     }).join('');
@@ -1617,14 +1889,18 @@ function clearSelection() {
 
 function updateSelectionUI() {
   const n = selectedIds.size;
-  const info = document.getElementById('sel-info');
-  const btn  = document.getElementById('btn-clear-sel');
+  const info     = document.getElementById('sel-info');
+  const btn      = document.getElementById('btn-clear-sel');
+  const btnPor   = document.getElementById('btn-porownaj');
   if (n > 0) {
     info.textContent = `Zaznaczono: ${n} (eksport obejmie zaznaczone)`;
     btn.style.display = '';
   } else {
     info.textContent = '';
     btn.style.display = 'none';
+  }
+  if (btnPor) {
+    btnPor.style.display = (n >= 2 && n <= 4) ? '' : 'none';
   }
   // stan checkboxa "zaznacz stronę"
   const cbAll = document.getElementById('cb-all');
@@ -1816,6 +2092,494 @@ function zamknijPrzelicznik(event) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('przelicz-overlay').classList.remove('open');
 });
+
+/* ═══════════════════════════════════════════════════════════════
+   NOWE FUNKCJE — ZMIENNE GLOBALNE
+══════════════════════════════════════════════════════════════════ */
+let viewMode = 'table'; // 'table' | 'cards'
+let budzetAktywny = false;
+let kalkulatorCena = null;  // cena aktualnie zaznaczonego rekordu (null = mediana)
+let poprzedniLicznikWynikow = 0;
+
+/* ═══════════════════════════════════════════════════════════════
+   9. ANIMOWANY LICZNIK WYNIKÓW
+══════════════════════════════════════════════════════════════════ */
+function animujLicznik(elementId, nowaWartosc) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const stara = poprzedniLicznikWynikow;
+  const roznica = Math.abs(nowaWartosc - stara);
+  if (roznica < 5) {
+    el.textContent = nowaWartosc.toLocaleString('pl-PL');
+    poprzedniLicznikWynikow = nowaWartosc;
+    return;
+  }
+  const czas = 400;
+  const start = performance.now();
+  function krok(ts) {
+    const postep = Math.min((ts - start) / czas, 1);
+    const biezaca = Math.round(stara + (nowaWartosc - stara) * postep);
+    el.textContent = biezaca.toLocaleString('pl-PL');
+    if (postep < 1) requestAnimationFrame(krok);
+    else {
+      el.textContent = nowaWartosc.toLocaleString('pl-PL');
+      poprzedniLicznikWynikow = nowaWartosc;
+    }
+  }
+  requestAnimationFrame(krok);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   POMOCNICZA — zamykanie modalów
+══════════════════════════════════════════════════════════════════ */
+function zamknijModal(overlayId, event) {
+  const overlay = document.getElementById(overlayId);
+  if (!overlay) return;
+  if (event && event.target !== overlay) return;
+  overlay.classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['kalkulator-overlay','absurd-overlay','podobne-overlay','porownaj-overlay']
+      .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('open');
+      });
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   1. KALKULATOR WOLNOŚCI FINANSOWEJ
+══════════════════════════════════════════════════════════════════ */
+function otworzKalkulator() {
+  // Wyznacz cenę: zaznaczony rekord lub mediana
+  const zaznaczoneIds = [...selectedIds];
+  if (zaznaczoneIds.length === 1) {
+    const rekord = filteredData.find(r => String(r.id) === zaznaczoneIds[0])
+                || allData.find(r => String(r.id) === zaznaczoneIds[0]);
+    kalkulatorCena = rekord ? rekord.price_total_zl : null;
+  } else {
+    kalkulatorCena = null;
+  }
+  const infoEl = document.getElementById('kalk-for-median');
+  if (kalkulatorCena) {
+    infoEl.textContent = '';
+  } else {
+    infoEl.textContent = 'Kalkulacja dla mediany cen w aktualnym widoku';
+  }
+  przeliczKalkulator();
+  document.getElementById('kalkulator-overlay').classList.add('open');
+}
+
+function aktualizujProcent() {
+  const v = document.getElementById('kalk-procent').value;
+  document.getElementById('kalk-procent-label').textContent = v + '%';
+}
+
+function komentarzKalkulatora(lata) {
+  if (lata < 5)  return '🎯 Nieźle! Masz plan.';
+  if (lata <= 15) return '🇵🇱 Klasyczna polska droga.';
+  if (lata <= 30) return '🚗 Może zacznij od garażu.';
+  if (lata <= 50) return '🏠 Może wynajem to nie takie zło?';
+  return '₿ Może kryptowaluty?';
+}
+
+function przeliczKalkulator() {
+  const pensjaEl = document.getElementById('kalk-pensja');
+  const pensja   = parseFloat(pensjaEl.value);
+  const procent  = parseInt(document.getElementById('kalk-procent').value) / 100;
+
+  // Wyznacz cenę referencyjną
+  let cena = kalkulatorCena;
+  if (!cena) {
+    const ceny = filteredData.map(r => r.price_total_zl).filter(Boolean).sort((a,b)=>a-b);
+    if (ceny.length === 0) {
+      document.getElementById('kalk-lata').textContent = '—';
+      document.getElementById('kalk-komentarz').textContent = 'Brak danych.';
+      return;
+    }
+    const mid = Math.floor(ceny.length / 2);
+    cena = ceny.length % 2 ? ceny[mid] : (ceny[mid-1] + ceny[mid]) / 2;
+  }
+
+  if (!pensja || pensja <= 0) {
+    document.getElementById('kalk-lata').textContent = '—';
+    document.getElementById('kalk-bar').style.width = '0%';
+    document.getElementById('kalk-komentarz').textContent = 'Wpisz pensję, żeby zacząć obliczenia.';
+    return;
+  }
+
+  const oszczednoscMies = pensja * procent;
+  const lata = cena / (oszczednoscMies * 12);
+  const lataZaokr = Math.round(lata * 10) / 10;
+  const pasek = Math.min(lata / 50 * 100, 100);
+
+  document.getElementById('kalk-lata').textContent = lataZaokr.toLocaleString('pl-PL', {maximumFractionDigits:1});
+  document.getElementById('kalk-bar').style.width = pasek + '%';
+  document.getElementById('kalk-komentarz').textContent = komentarzKalkulatora(lata);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2. RANKING ABSURDU
+══════════════════════════════════════════════════════════════════ */
+const komentarzeDrogie = [
+  'Za tę cenę można kupić wieś.',
+  'Parking wliczony w cenę? Chyba nie.',
+  'Deweloper lata na wakacje na Malediwach.',
+  'Tu nawet powietrze jest płatne.',
+  'To chyba pomyłka o jedno zero... chyba.',
+  'Złote klamki? Oczywiście.',
+  'Cena zawiera widok z okna na inne drogie mieszkania.',
+  'Nawet ChatGPT mrugnął.',
+  'Może to cena za całą ulicę?',
+  'Na ten kredyt pracuje wnuk Twojego wnuka.',
+];
+const komentarzeTanie = [
+  'Sprawdź czy ściany są.',
+  'Optymistycznie: blisko centrum cmentarza.',
+  'Instalacja elektryczna z epoki Gierka.',
+  'Widok z okna: ściana.',
+  'Lokator "wyjeżdża" niedługo.',
+  'Łazienka jest! Prawie.',
+  'Okazja stulecia — pytanie, którego.',
+  'Podłoga w komplecie (w piwnicy).',
+  'Cena uwzględnia remont... niestety.',
+  'Sąsiedzi? Aktywni.',
+];
+
+function losujKomentarz(pula, indeks) {
+  return pula[indeks % pula.length];
+}
+
+function otworzAbsurd() {
+  const dane = [...filteredData].filter(r => r.price_total_zl);
+  if (dane.length === 0) { alert('Brak danych do rankingu.'); return; }
+  dane.sort((a, b) => b.price_total_zl - a.price_total_zl);
+  const top3    = dane.slice(0, 3);
+  const bottom3 = [...dane].reverse().slice(0, 3);
+  const fmt = n => n !== null ? n.toLocaleString('pl-PL') : '—';
+
+  function budujTabele(rekordy, pula) {
+    return `<thead><tr>
+      <th>Dzielnica</th><th>m²</th><th>Cena (zł)</th><th>Link</th><th>Komentarz</th>
+    </tr></thead><tbody>` +
+    rekordy.map((r, i) => `<tr>
+      <td class="locality" style="color:var(--cyan)">${r.locality ?? '—'}</td>
+      <td class="num">${r.area_m2 !== null ? r.area_m2.toFixed(1) : '—'}</td>
+      <td class="num">${fmt(r.price_total_zl)} zł</td>
+      <td><a href="${r.url}" target="_blank" style="color:var(--blue);font-size:10px">↗</a></td>
+      <td class="modal-comment">${losujKomentarz(pula, i + Math.floor(r.price_total_zl / 100000))}</td>
+    </tr>`).join('') + '</tbody>';
+  }
+
+  document.getElementById('absurd-top').innerHTML    = budujTabele(top3, komentarzeDrogie);
+  document.getElementById('absurd-bottom').innerHTML = budujTabele(bottom3, komentarzeTanie);
+  document.getElementById('absurd-overlay').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   3. HISTOGRAM CEN
+══════════════════════════════════════════════════════════════════ */
+function drawHistogram(data) {
+  const canvas = document.getElementById('price-histogram');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // Dopasuj rozdzielczość do faktycznych rozmiarów
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width - 28; // uwzględnij padding
+  const H = 120;
+  canvas.width  = W;
+  canvas.height = H;
+
+  const ceny = data.map(r => r.price_total_zl).filter(Boolean);
+  if (ceny.length === 0) {
+    ctx.clearRect(0, 0, W, H);
+    return;
+  }
+
+  const minC  = Math.min(...ceny);
+  const maxC  = Math.max(...ceny);
+  const kubki = 10;
+  const krok  = (maxC - minC) / kubki || 1;
+
+  // Policz kubełki
+  const kubki_arr = Array.from({length: kubki}, (_, i) => ({
+    od:  minC + i * krok,
+    do:  minC + (i+1) * krok,
+    ile: 0,
+  }));
+  ceny.forEach(c => {
+    const idx = Math.min(Math.floor((c - minC) / krok), kubki - 1);
+    kubki_arr[idx].ile++;
+  });
+  const maxIle = Math.max(...kubki_arr.map(k => k.ile));
+
+  // Pobierz kolor z CSS variable (obsługa obu motywów)
+  const amberColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--amber').trim() || '#f0b429';
+
+  ctx.clearRect(0, 0, W, H);
+
+  const padding = 4;
+  const slupekW = (W - padding * (kubki + 1)) / kubki;
+
+  kubki_arr.forEach((k, i) => {
+    const x  = padding + i * (slupekW + padding);
+    const wys = maxIle ? (k.ile / maxIle) * (H - 16) : 0;
+    const y  = H - wys;
+    ctx.fillStyle = amberColor;
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(x, y, slupekW, wys);
+    ctx.globalAlpha = 1;
+  });
+
+  // Przechowaj dane kubełków dla tooltipa
+  canvas._kubki = kubki_arr;
+  canvas._slupekW = slupekW;
+  canvas._padding = padding;
+}
+
+// Tooltip dla histogramu
+(function() {
+  document.addEventListener('mousemove', e => {
+    const canvas = document.getElementById('price-histogram');
+    if (!canvas || !canvas._kubki) return;
+    const tooltip = document.getElementById('hist-tooltip');
+    const rect = canvas.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right ||
+        e.clientY < rect.top  || e.clientY > rect.bottom) {
+      tooltip.style.display = 'none';
+      return;
+    }
+    const x = e.clientX - rect.left;
+    const padding  = canvas._padding;
+    const slupekW  = canvas._slupekW;
+    const kubki    = canvas._kubki;
+    const idx = Math.floor(x / (slupekW + padding));
+    if (idx < 0 || idx >= kubki.length) { tooltip.style.display = 'none'; return; }
+    const k = kubki[idx];
+    const fmt = n => Math.round(n).toLocaleString('pl-PL');
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top  = (e.clientY - 8)  + 'px';
+    tooltip.textContent = `${fmt(k.od)} – ${fmt(k.do)} zł | ${k.ile} ogł.`;
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   4. HEATMAPA DZIELNIC — dodana do renderDistrictTable (patch)
+══════════════════════════════════════════════════════════════════ */
+// Będzie wstrzyknięta poprzez patch renderDistrictTable poniżej
+
+/* ═══════════════════════════════════════════════════════════════
+   5. ZNAJDŹ PODOBNE
+══════════════════════════════════════════════════════════════════ */
+function otworzPodobne(rekordId) {
+  const ref = filteredData.find(r => String(r.id) === String(rekordId))
+           || allData.find(r => String(r.id) === String(rekordId));
+  if (!ref) return;
+
+  const prog = 0.15;
+  const podobne = filteredData.filter(r => {
+    if (String(r.id) === String(rekordId)) return false;
+    const samoMiejsce = r.locality === ref.locality;
+    const blisCena    = ref.price_total_zl && r.price_total_zl
+                        && Math.abs(r.price_total_zl - ref.price_total_zl) / ref.price_total_zl < prog;
+    const blisPow     = ref.area_m2 && r.area_m2
+                        && Math.abs(r.area_m2 - ref.area_m2) / ref.area_m2 < prog;
+    return samoMiejsce || (blisCena && blisPow);
+  }).slice(0, 5);
+
+  const fmt = n => n !== null && n !== undefined ? n.toLocaleString('pl-PL') : '—';
+  const info = document.getElementById('podobne-info');
+  info.textContent = podobne.length < 5
+    ? `Znaleziono ${podobne.length} podobnych ogłoszeń (ta sama dzielnica lub ±15% cena i m²).`
+    : 'Pokazuję 5 najbardziej podobnych ogłoszeń.';
+
+  document.getElementById('podobne-table').innerHTML = podobne.length === 0
+    ? '<tr><td style="color:var(--text3);padding:12px">Brak podobnych ogłoszeń.</td></tr>'
+    : `<thead><tr>
+        <th>Dzielnica</th><th>Pok.</th><th>m²</th><th>Cena (zł)</th><th>Link</th>
+      </tr></thead><tbody>` +
+      podobne.map(r => `<tr>
+        <td style="color:var(--cyan)">${r.locality ?? '—'}</td>
+        <td class="num">${r.rooms ?? '—'}</td>
+        <td class="num">${r.area_m2 !== null ? r.area_m2.toFixed(1) : '—'}</td>
+        <td class="num">${fmt(r.price_total_zl)} zł</td>
+        <td><a href="${r.url}" target="_blank" style="color:var(--blue);font-size:10px">↗ otwórz</a></td>
+      </tr>`).join('') + '</tbody>';
+
+  document.getElementById('podobne-overlay').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   6. PORÓWNYWARKA
+══════════════════════════════════════════════════════════════════ */
+function otworzPorownywarkę() {
+  const zaznaczone = filteredData.filter(r => selectedIds.has(String(r.id)));
+  if (zaznaczone.length < 2) { alert('Zaznacz 2–4 ogłoszenia.'); return; }
+  if (zaznaczone.length > 4) { alert('Zaznacz maksymalnie 4 ogłoszenia.'); return; }
+
+  const fmt = n => n !== null && n !== undefined ? n.toLocaleString('pl-PL') : '—';
+
+  // Pola do porównania: [etykieta, fn(r), czy niższa = lepsza, czy wyższa = lepsza]
+  const pola = [
+    { label: 'ID',        val: r => r.id ?? '—',                        typ: null },
+    { label: 'Dzielnica', val: r => r.locality ?? '—',                  typ: null },
+    { label: 'Pokoje',    val: r => r.rooms ?? '—',                     typ: 'wyzszy' },
+    { label: 'm²',        val: r => r.area_m2 !== null ? r.area_m2.toFixed(1) : '—', typ: 'wyzszy' },
+    { label: 'Cena (zł)', val: r => fmt(r.price_total_zl),              typ: 'nizszy',  num: r => r.price_total_zl },
+    { label: 'zł/m²',    val: r => fmt(r.price_per_m2_zl),             typ: 'nizszy',  num: r => r.price_per_m2_zl },
+  ];
+
+  const naglowki = '<thead><tr><th>Pole</th>' +
+    zaznaczone.map(r => `<th style="text-align:right">${r.locality ?? r.id}</th>`).join('') +
+    '</tr></thead>';
+
+  const wiersze = pola.map(pole => {
+    const wartosci = zaznaczone.map(r => pole.val(r));
+    let klasy = zaznaczone.map(() => '');
+
+    if (pole.typ && pole.num) {
+      const numery = zaznaczone.map(r => pole.num(r)).filter(x => x !== null && x !== undefined);
+      if (numery.length >= 2) {
+        const minV = Math.min(...numery);
+        const maxV = Math.max(...numery);
+        klasy = zaznaczone.map(r => {
+          const n = pole.num(r);
+          if (n === null || n === undefined) return '';
+          if (pole.typ === 'nizszy') {
+            if (n === minV) return 'best';
+            if (n === maxV) return 'worst';
+          } else {
+            if (n === maxV) return 'best';
+            if (n === minV) return 'worst';
+          }
+          return '';
+        });
+      }
+    }
+
+    return '<tr><td>' + pole.label + '</td>' +
+      wartosci.map((v, i) => `<td class="${klasy[i]}">${v}</td>`).join('') +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('por-table').innerHTML = naglowki + '<tbody>' + wiersze + '</tbody>';
+  document.getElementById('porownaj-overlay').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   7. MÓJ BUDŻET
+══════════════════════════════════════════════════════════════════ */
+function przełączBudżet() {
+  budzetAktywny = !budzetAktywny;
+  const filterGroups = document.querySelectorAll('#sidebar .filter-group');
+  const btnReset     = document.querySelector('#sidebar .btn-reset:first-of-type');
+  const btnBudzet    = document.getElementById('btn-budzet');
+  const budzPanel    = document.getElementById('budzet-sidebar');
+
+  if (budzetAktywny) {
+    filterGroups.forEach(g => g.style.display = 'none');
+    if (btnReset) btnReset.style.display = 'none';
+    if (btnBudzet) btnBudzet.style.display = 'none';
+    budzPanel.classList.add('active');
+    aktualizujBudżet(document.getElementById('budzet-slider').value);
+  } else {
+    filterGroups.forEach(g => g.style.display = '');
+    if (btnReset) btnReset.style.display = '';
+    if (btnBudzet) btnBudzet.style.display = '';
+    budzPanel.classList.remove('active');
+    // Wyczyść filtr ceny
+    document.getElementById('f-price-max').value = '';
+    applyFilters();
+  }
+}
+
+function aktualizujBudżet(wartosc) {
+  const v = parseInt(wartosc);
+  document.getElementById('budzet-val').textContent = v.toLocaleString('pl-PL');
+  document.getElementById('f-price-max').value = v;
+  applyFilters();
+  const ile = filteredData.length;
+  document.getElementById('budzet-count').textContent = ile.toLocaleString('pl-PL');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   8. WIDOK KARTEK
+══════════════════════════════════════════════════════════════════ */
+function przełączWidok() {
+  viewMode = viewMode === 'table' ? 'cards' : 'table';
+  const btn = document.getElementById('btn-widok');
+  if (viewMode === 'cards') {
+    btn.textContent = '☰ Tabela';
+    btn.classList.add('active');
+    document.getElementById('table-wrap').style.display = 'none';
+    document.getElementById('cards-wrap').classList.add('active');
+  } else {
+    btn.textContent = '⊞ Karty';
+    btn.classList.remove('active');
+    document.getElementById('table-wrap').style.display = '';
+    document.getElementById('cards-wrap').classList.remove('active');
+  }
+  renderTable();
+}
+
+function renderKarty(page) {
+  const fmt = n => n !== null && n !== undefined ? n.toLocaleString('pl-PL') : '—';
+  const grid = document.getElementById('cards-grid');
+  if (page.length === 0) {
+    grid.innerHTML = '<div style="color:var(--text3);padding:20px">Brak wyników</div>';
+    return;
+  }
+  grid.innerHTML = page.map(r => `
+    <div class="ogloszenie-karta">
+      <div class="karta-dzielnica">${r.locality ?? '—'}</div>
+      <div class="karta-cena">${fmt(r.price_total_zl)} zł</div>
+      <div class="karta-meta">${r.area_m2 !== null ? r.area_m2.toFixed(1) + ' m²' : '—'} · ${r.rooms ?? '—'} pok.</div>
+      <div class="karta-actions">
+        <a href="${r.url}" target="_blank" style="color:var(--blue);font-size:10px">↗ otwórz</a>
+        <button class="btn-przelicz" data-cena="${r.price_total_zl ?? ''}"
+                data-loc="${(r.locality ?? '').replace(/"/g,'&quot;')}"
+                onclick="otworzPrzelicznik(this)">Przelicz</button>
+      </div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PATCH: renderDistrictTable — heatmapa zł/m²
+══════════════════════════════════════════════════════════════════ */
+(function() {
+  const oryginalna = renderDistrictTable;
+  renderDistrictTable = function() {
+    oryginalna();
+    // Po renderze — dodaj kolory tła do komórek Śr. zł/m²
+    const wiersze = document.querySelectorAll('#district-tbody tr');
+    if (wiersze.length === 0) return;
+    const wartosci = districtData.map(d => d.avgSqm).filter(x => x !== null);
+    if (wartosci.length === 0) return;
+    const minSqm = Math.min(...wartosci);
+    const maxSqm = Math.max(...wartosci);
+    const range  = maxSqm - minSqm || 1;
+
+    wiersze.forEach(tr => {
+      // 5. kolumna (index 4) = Śr. zł/m²
+      const td = tr.cells[4];
+      if (!td) return;
+      const tekst = td.textContent.replace(/\s+/g, '').replace(/[^\d]/g,'');
+      const val   = parseInt(tekst);
+      if (isNaN(val)) return;
+      const t = (val - minSqm) / range; // 0=najtańszy, 1=najdroższy
+      // Interpolacja alfa: zielony -> czerwony
+      const r = Math.round(t * 239 + (1-t) * 34);
+      const g = Math.round(t * 68  + (1-t) * 197);
+      const b = Math.round(t * 68  + (1-t) * 94);
+      td.style.background = `rgba(${r},${g},${b},0.15)`;
+    });
+  };
+})();
 
 /* ─── START ───────────────────────────────────────────────────── */
 init();

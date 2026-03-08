@@ -21,6 +21,15 @@ Rejestr zadań projektowych. Status: `[ ]` otwarte · `[x]` ukończone · `[~]` 
 - [x] Naprawa slugu Świnoujścia (`swinoujscie` → `swinoujscie-h`)
 - [x] Skill Claude Code (`adresowo-scraper`) z pełnym kontekstem projektowym
 - [x] Eksport danych do JSON, Markdown, XLSX i PDF z checkboxami do selekcji rekordów
+- [x] Kalkulator wolności finansowej (modal, slider oszczędności, animowany pasek, komentarz)
+- [x] Ranking absurdu (TOP 3 najdroższe / najtańsze z losowanymi komentarzami)
+- [x] Histogram cen (canvas, 10 kubełków, tooltip, odświeżany przy filtrach)
+- [x] Heatmapa dzielnic (gradient zielony→czerwony na kolumnie zł/m² w tabeli dzielnic)
+- [x] Znajdź podobne (modal z 5 podobnymi ogłoszeniami, kryterium dzielnica LUB ±15%)
+- [x] Porównywarka (modal side-by-side dla 2–4 zaznaczonych, podświetlenie best/worst)
+- [x] Mój budżet (tryb uproszczony z jednym suwakiem, zwija sidebar)
+- [x] Widok kartek (toggle tabela/karty, CSS grid 3/2/1 kolumn)
+- [x] Animowany licznik wyników (requestAnimationFrame, 400ms)
 
 ---
 
@@ -35,7 +44,7 @@ Rejestr zadań projektowych. Status: `[ ]` otwarte · `[x]` ukończone · `[~]` 
 ### Średni priorytet
 
 - [ ] **Więcej miast** — Gdańsk, Wrocław, Kraków, Warszawa (weryfikacja slugów wymagana)
-- [ ] **Wykres cen** w dashboardzie — histogram rozkładu cen per dzielnica
+- [x] ~~Wykres cen w dashboardzie~~ → zrealizowano jako histogram cen (canvas, 10 kubełków)
 - [x] ~~Eksport filtrowanych danych z dashboardu do CSV~~ → zrealizowano jako JSON/MD/XLSX/PDF
 - [ ] **Porównanie miast** w zakładce Statystyki — zestawienie avg cena/m² per miasto
 - [ ] **Automatyczny re-scraping** — GitHub Actions workflow uruchamiający scraper co tydzień
@@ -45,7 +54,7 @@ Rejestr zadań projektowych. Status: `[ ]` otwarte · `[x]` ukończone · `[~]` 
 
 - [ ] **Tryb `--all-cities`** w scraper.py — scrapowanie wszystkich skonfigurowanych miast jednym poleceniem
 - [ ] **Strona szczegółów ogłoszenia** — scraping strony `adresowo.pl/o/{slug}` po kliknięciu w dashboardzie
-- [ ] **Eksport do Excel (.xlsx)** z formatowaniem komórek liczbowych
+- [x] ~~Eksport do Excel (.xlsx)~~ → zrealizowano w pakiecie eksportu (SheetJS)
 - [ ] **Testy integracyjne API** — pytest dla endpointów FastAPI (httpx + pytest-asyncio)
 - [ ] **Docker Compose** — konteneryzacja API + volume na dane CSV
 

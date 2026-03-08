@@ -11,6 +11,14 @@ Scraper ogłoszeń mieszkaniowych z portalu [adresowo.pl](https://adresowo.pl) z
 - Dashboard SPA: tabela z filtrowaniem, sortowaniem i paginacją, statystyki dzielnic, test runner
 - Eksport danych do JSON, Markdown, XLSX i PDF (z nagłówkiem raportu zawierającym aktywne filtry)
 - Selekcja rekordów checkboxami — eksport obejmuje zaznaczone lub wszystkie przefiltrowane
+- Widok kartek (toggle tabela/grid) i animowany licznik wyników
+- Kalkulator wolności finansowej — ile lat oszczędzania na wymarzone mieszkanie
+- Ranking absurdu — TOP 3 najdroższe i najtańsze z humorystycznymi komentarzami
+- Histogram cen — rozkład ofert w 10 kubełkach cenowych (canvas, tooltip)
+- Heatmapa dzielnic — kolumna zł/m² kolorowana gradientem najtańszy→najdroższy
+- Znajdź podobne — 5 podobnych ogłoszeń do wybranego (dzielnica lub ±15% cena/m²)
+- Porównywarka — side-by-side 2–4 zaznaczonych ogłoszeń z podświetleniem best/worst
+- Tryb "Mój budżet" — uproszczony widok z jednym suwakiem max ceny
 - Przelicznik ceny mieszkania na kebaby, hot-dogi i piwa (popup przy każdym ogłoszeniu)
 - 42 testy jednostkowe parsera HTML
 
