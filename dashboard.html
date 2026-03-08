@@ -939,7 +939,6 @@ tr.selected td { background: var(--amber-dim) !important; }
 .karta-actions { display: flex; gap: 6px; margin-top: 4px; }
 
 /* ─── PORÓWNYWARKA ───────────────────────────────────────────── */
-#btn-porownaj { display: none; }
 .por-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .por-table th { background: var(--bg3); padding: 6px 10px; text-align: right;
   font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--text3);
@@ -949,6 +948,43 @@ tr.selected td { background: var(--amber-dim) !important; }
 .por-table td:first-child { text-align: left; color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
 .por-table .best { background: var(--green-dim); color: var(--green); font-weight: 700; }
 .por-table .worst { background: var(--red-dim); color: var(--red); }
+
+/* ─── CITY AUTOCOMPLETE ──────────────────────────────────────── */
+#city-search-wrap { position: relative; }
+#city-search {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text1); font-size: 11px; padding: 3px 8px; height: 24px;
+  width: 130px; outline: none; transition: border-color .15s;
+}
+#city-search:focus { border-color: var(--amber); }
+.city-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 999;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+  min-width: 200px; max-height: 220px; overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  display: none;
+}
+.city-dropdown.open { display: block; }
+.city-dd-item {
+  padding: 5px 10px; font-size: 11px; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.city-dd-item:last-child { border-bottom: none; }
+.city-dd-item:hover, .city-dd-item.active { background: var(--bg3); }
+.city-dd-slug { font-size: 9px; color: var(--text3); }
+.city-dd-empty { padding: 8px 10px; font-size: 11px; color: var(--text3); }
+
+/* ─── PROGRESS SPINNER ───────────────────────────────────────── */
+.progress-spinner {
+  width: 36px; height: 36px; margin: 0 auto;
+  border: 3px solid var(--border); border-top-color: var(--amber);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── AKTUALIZUJ BUTTON ──────────────────────────────────────── */
+.btn-aktualizuj { margin-left: auto; }
 
 /* ─── MÓJ BUDŻET ─────────────────────────────────────────────── */
 #budzet-sidebar {
@@ -1061,6 +1097,15 @@ input[type="range"].budzet-slider {
   </div>
 </div>
 
+<!-- PROGRESS MODAL — scraping -->
+<div id="progress-overlay" class="modal-overlay">
+  <div class="modal-box" style="text-align:center;padding:40px 48px;min-width:280px">
+    <div class="progress-spinner"></div>
+    <div id="progress-msg" style="margin-top:18px;font-size:13px;color:var(--text2)">Scrapuję…</div>
+    <div style="margin-top:6px;font-size:10px;color:var(--text3)">Może potrwać 20–90 sekund</div>
+  </div>
+</div>
+
 <div id="loader">
   <div class="loader-logo">ADRESOWO</div>
   <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
@@ -1074,6 +1119,12 @@ input[type="range"].budzet-slider {
   <div id="city-selector" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
     <span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Miasto</span>
     <div id="city-btns" style="display:flex;gap:4px;"></div>
+    <div id="city-search-wrap">
+      <input type="text" id="city-search" placeholder="+ inne miasto…" autocomplete="off"
+             oninput="onCitySearchInput()" onfocus="onCitySearchFocus()"
+             onkeydown="onCitySearchKeydown(event)">
+      <div id="city-dropdown" class="city-dropdown"></div>
+    </div>
   </div>
   <div class="ticker-sep"></div>
   <div id="stats-ticker">
@@ -1186,6 +1237,7 @@ input[type="range"].budzet-slider {
         <span id="sel-info"></span>
         <button class="btn-export" id="btn-porownaj" onclick="otworzPorownywarkę()" style="display:none">⚖ Porównaj zaznaczone</button>
         <button class="btn-sel-clear" id="btn-clear-sel" onclick="clearSelection()" style="display:none">✕ odznacz wszystkie</button>
+        <button class="btn-export btn-aktualizuj" id="btn-aktualizuj" onclick="aktualizujDane()" title="Ponownie scrapuje aktualne miasto">↺ Aktualizuj dane</button>
       </div>
       <!-- Widok kart -->
       <div id="cards-wrap">
@@ -1298,6 +1350,11 @@ let districtSortCol = 'count';
 let districtSortDir = -1; // -1=DESC domyślnie
 let districtData = []; // cache dla sortowania
 
+let viewMode = 'table'; // 'table' | 'cards'
+let budzetAktywny = false;
+let kalkulatorCena = null;  // cena zaznaczonego rekordu lub null (= mediana)
+let poprzedniLicznikWynikow = 0;
+
 const API = 'http://localhost:8001';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1338,7 +1395,8 @@ async function loadCity(city) {
   document.querySelectorAll('.city-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.city === city);
   });
-  // Reset filtrów i sortowania tabeli
+  // Reset selekcji, filtrów i sortowania tabeli
+  selectedIds.clear();
   resetFilters();
   sortCol = null;
   sortDir = 1;
@@ -1531,23 +1589,45 @@ function changePageSize() {
 /* ═══════════════════════════════════════════════════════════════
    STATYSTYKI
 ══════════════════════════════════════════════════════════════════ */
-function buildStats(data) {
+// Oblicza agregaty per dzielnica — czysta funkcja, zwraca dane bez efektów ubocznych
+function obliczStatystykiDzielnic(data) {
+  const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  const districts = {};
+  data.forEach(r => {
+    const d = r.locality || '(brak)';
+    if (!districts[d]) districts[d] = { count: 0, prices: [], areas: [], sqms: [] };
+    districts[d].count++;
+    if (r.price_total_zl)  districts[d].prices.push(r.price_total_zl);
+    if (r.area_m2)         districts[d].areas.push(r.area_m2);
+    if (r.price_per_m2_zl) districts[d].sqms.push(r.price_per_m2_zl);
+  });
+  return Object.entries(districts).map(([name, d]) => ({
+    name,
+    count:    d.count,
+    avgPrice: d.prices.length ? Math.round(avg(d.prices)) : null,
+    avgArea:  d.areas.length  ? avg(d.areas) : null,
+    avgSqm:   d.sqms.length   ? Math.round(avg(d.sqms)) : null,
+  }));
+}
+
+// Renderuje karty podsumowania statystyk — wyłącznie zapis do DOM
+function renderujKartyStatystyk(data) {
   const prices = data.map(r => r.price_total_zl).filter(x => x !== null);
   const areas  = data.map(r => r.area_m2).filter(x => x !== null);
   const sqms   = data.map(r => r.price_per_m2_zl).filter(x => x !== null);
-  const avg    = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+  const avg    = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
   const fmt    = n => n.toLocaleString('pl-PL');
-  const median = arr => { const s=[...arr].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+  const median = arr => { const s = [...arr].sort((a, b) => a - b); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
   const cards = [
-    { label:'Łączna liczba rekordów', value: data.length.toLocaleString('pl-PL'), sub:'ogłoszeń' },
-    { label:'Średnia cena', value: fmt(Math.round(avg(prices)))+' zł', sub:`mediana: ${fmt(Math.round(median(prices)))} zł` },
-    { label:'Średnia powierzchnia', value: avg(areas).toFixed(1)+' m²', sub:`mediana: ${median(areas).toFixed(1)} m²` },
-    { label:'Średnia cena / m²', value: fmt(Math.round(avg(sqms)))+' zł', sub:`mediana: ${fmt(Math.round(median(sqms)))} zł` },
-    { label:'Najtańsze ogłoszenie', value: fmt(Math.min(...prices))+' zł', sub:'' },
-    { label:'Najdroższe ogłoszenie', value: fmt(Math.max(...prices))+' zł', sub:'' },
-    { label:'Min. cena / m²', value: fmt(Math.min(...sqms))+' zł', sub:'' },
-    { label:'Max. cena / m²', value: fmt(Math.max(...sqms))+' zł', sub:'' },
+    { label: 'Łączna liczba rekordów', value: data.length.toLocaleString('pl-PL'), sub: 'ogłoszeń' },
+    { label: 'Średnia cena',           value: fmt(Math.round(avg(prices))) + ' zł', sub: `mediana: ${fmt(Math.round(median(prices)))} zł` },
+    { label: 'Średnia powierzchnia',   value: avg(areas).toFixed(1) + ' m²',        sub: `mediana: ${median(areas).toFixed(1)} m²` },
+    { label: 'Średnia cena / m²',      value: fmt(Math.round(avg(sqms))) + ' zł',   sub: `mediana: ${fmt(Math.round(median(sqms)))} zł` },
+    { label: 'Najtańsze ogłoszenie',   value: fmt(Math.min(...prices)) + ' zł',     sub: '' },
+    { label: 'Najdroższe ogłoszenie',  value: fmt(Math.max(...prices)) + ' zł',     sub: '' },
+    { label: 'Min. cena / m²',         value: fmt(Math.min(...sqms)) + ' zł',       sub: '' },
+    { label: 'Max. cena / m²',         value: fmt(Math.max(...sqms)) + ' zł',       sub: '' },
   ];
 
   document.getElementById('stats-cards').innerHTML = cards.map(c => `
@@ -1556,26 +1636,12 @@ function buildStats(data) {
       <div class="stat-value">${c.value}</div>
       ${c.sub ? `<div class="stat-sub">${c.sub}</div>` : ''}
     </div>`).join('');
+}
 
-  // Zbuduj dane dzielnic i zapisz w cache
-  const districts = {};
-  data.forEach(r => {
-    const d = r.locality || '(brak)';
-    if (!districts[d]) districts[d] = { count:0, prices:[], areas:[], sqms:[] };
-    districts[d].count++;
-    if (r.price_total_zl)  districts[d].prices.push(r.price_total_zl);
-    if (r.area_m2)         districts[d].areas.push(r.area_m2);
-    if (r.price_per_m2_zl) districts[d].sqms.push(r.price_per_m2_zl);
-  });
-
-  districtData = Object.entries(districts).map(([name, d]) => ({
-    name,
-    count:    d.count,
-    avgPrice: d.prices.length ? Math.round(avg(d.prices)) : null,
-    avgArea:  d.areas.length  ? avg(d.areas) : null,
-    avgSqm:   d.sqms.length   ? Math.round(avg(d.sqms)) : null,
-  }));
-
+// Orkiestrator — oblicza dane, aktualizuje cache, zleca render
+function buildStats(data) {
+  renderujKartyStatystyk(data);
+  districtData = obliczStatystykiDzielnic(data);
   renderDistrictTable();
 }
 
@@ -1601,6 +1667,20 @@ function renderDistrictTable() {
     return districtSortDir * (av - bv);
   });
 
+  // Heatmapa zł/m²: oblicz zakres raz, przed pętlą renderującą
+  const wartosciSqm = sorted.map(d => d.avgSqm).filter(x => x !== null);
+  const minSqm  = wartosciSqm.length ? Math.min(...wartosciSqm) : 0;
+  const maxSqm  = wartosciSqm.length ? Math.max(...wartosciSqm) : 1;
+  const rangeSqm = maxSqm - minSqm || 1;
+  function kolorHeatmapy(val) {
+    if (val === null) return '';
+    const t = (val - minSqm) / rangeSqm; // 0 = najtańszy, 1 = najdroższy
+    const r = Math.round(t * 239 + (1 - t) * 34);
+    const g = Math.round(t * 68  + (1 - t) * 197);
+    const b = Math.round(t * 68  + (1 - t) * 94);
+    return `background:rgba(${r},${g},${b},0.15)`;
+  }
+
   const maxCount = Math.max(...sorted.map(d => d.count));
 
   document.getElementById('district-tbody').innerHTML = sorted.map(d => {
@@ -1609,9 +1689,9 @@ function renderDistrictTable() {
       <tr>
         <td class="locality">${d.name}</td>
         <td class="num">${d.count}</td>
-        <td class="num">${d.avgPrice !== null ? fmt(d.avgPrice)+' zł' : '—'}</td>
+        <td class="num">${d.avgPrice !== null ? fmt(d.avgPrice) + ' zł' : '—'}</td>
         <td class="num">${d.avgArea  !== null ? d.avgArea.toFixed(1) : '—'}</td>
-        <td class="num">${d.avgSqm   !== null ? fmt(d.avgSqm)+' zł'  : '—'}</td>
+        <td class="num" style="${kolorHeatmapy(d.avgSqm)}">${d.avgSqm !== null ? fmt(d.avgSqm) + ' zł' : '—'}</td>
         <td class="bar-cell">
           <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div>
         </td>
@@ -1620,9 +1700,9 @@ function renderDistrictTable() {
 
   // Aktualizuj klasy nagłówków
   document.querySelectorAll('.district-table th.sortable').forEach(th => {
-    th.classList.remove('sorted-asc','sorted-desc');
+    th.classList.remove('sorted-asc', 'sorted-desc');
   });
-  const cols = ['name','count','avgPrice','avgArea','avgSqm'];
+  const cols = ['name', 'count', 'avgPrice', 'avgArea', 'avgSqm'];
   const thList = document.querySelectorAll('.district-table th.sortable');
   const idx = cols.indexOf(districtSortCol);
   if (idx >= 0 && thList[idx]) {
@@ -1868,7 +1948,8 @@ function toggleTheme() {
 function toggleSelectRow(cb) {
   const id = cb.dataset.id;
   if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
-  cb.closest('tr').classList.toggle('selected', cb.checked);
+  const row = cb.closest('tr') || cb.closest('.ogloszenie-karta');
+  if (row) row.classList.toggle('selected', cb.checked);
   updateSelectionUI();
 }
 
@@ -1900,7 +1981,7 @@ function updateSelectionUI() {
     btn.style.display = 'none';
   }
   if (btnPor) {
-    btnPor.style.display = (n >= 2 && n <= 4) ? '' : 'none';
+    btnPor.style.display = (n >= 2 && n <= 4) ? 'inline-flex' : 'none';
   }
   // stan checkboxa "zaznacz stronę"
   const cbAll = document.getElementById('cb-all');
@@ -2089,17 +2170,6 @@ function zamknijPrzelicznik(event) {
   document.getElementById('przelicz-overlay').classList.remove('open');
 }
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.getElementById('przelicz-overlay').classList.remove('open');
-});
-
-/* ═══════════════════════════════════════════════════════════════
-   NOWE FUNKCJE — ZMIENNE GLOBALNE
-══════════════════════════════════════════════════════════════════ */
-let viewMode = 'table'; // 'table' | 'cards'
-let budzetAktywny = false;
-let kalkulatorCena = null;  // cena aktualnie zaznaczonego rekordu (null = mediana)
-let poprzedniLicznikWynikow = 0;
 
 /* ═══════════════════════════════════════════════════════════════
    9. ANIMOWANY LICZNIK WYNIKÓW
@@ -2139,14 +2209,14 @@ function zamknijModal(overlayId, event) {
   overlay.classList.remove('open');
 }
 
+// Centralny handler klawiatury — zamykanie wszystkich modali przez ESC
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    ['kalkulator-overlay','absurd-overlay','podobne-overlay','porownaj-overlay']
-      .forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('open');
-      });
-  }
+  if (e.key !== 'Escape') return;
+  ['progress-overlay', 'przelicz-overlay', 'kalkulator-overlay', 'absurd-overlay', 'podobne-overlay', 'porownaj-overlay']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('open');
+    });
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2432,6 +2502,7 @@ function otworzPorownywarkę() {
     { label: 'm²',        val: r => r.area_m2 !== null ? r.area_m2.toFixed(1) : '—', typ: 'wyzszy' },
     { label: 'Cena (zł)', val: r => fmt(r.price_total_zl),              typ: 'nizszy',  num: r => r.price_total_zl },
     { label: 'zł/m²',    val: r => fmt(r.price_per_m2_zl),             typ: 'nizszy',  num: r => r.price_per_m2_zl },
+    { label: 'Ogłoszenie', val: r => r.url ? `<a href="${r.url}" target="_blank" style="color:var(--blue)">↗ otwórz</a>` : '—', typ: null },
   ];
 
   const naglowki = '<thead><tr><th>Pole</th>' +
@@ -2469,6 +2540,7 @@ function otworzPorownywarkę() {
 
   document.getElementById('por-table').innerHTML = naglowki + '<tbody>' + wiersze + '</tbody>';
   document.getElementById('porownaj-overlay').classList.add('open');
+  clearSelection();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2534,9 +2606,17 @@ function renderKarty(page) {
     grid.innerHTML = '<div style="color:var(--text3);padding:20px">Brak wyników</div>';
     return;
   }
-  grid.innerHTML = page.map(r => `
-    <div class="ogloszenie-karta">
-      <div class="karta-dzielnica">${r.locality ?? '—'}</div>
+  grid.innerHTML = page.map(r => {
+    const rid = String(r.id ?? '');
+    const checked = selectedIds.has(rid) ? 'checked' : '';
+    const selClass = selectedIds.has(rid) ? ' selected' : '';
+    return `
+    <div class="ogloszenie-karta${selClass}">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+        <input type="checkbox" class="row-cb" data-id="${rid}" ${checked} onchange="toggleSelectRow(this)"
+               style="accent-color:var(--amber);width:13px;height:13px;cursor:pointer;flex-shrink:0">
+        <div class="karta-dzielnica" style="margin:0">${r.locality ?? '—'}</div>
+      </div>
       <div class="karta-cena">${fmt(r.price_total_zl)} zł</div>
       <div class="karta-meta">${r.area_m2 !== null ? r.area_m2.toFixed(1) + ' m²' : '—'} · ${r.rooms ?? '—'} pok.</div>
       <div class="karta-actions">
@@ -2545,41 +2625,174 @@ function renderKarty(page) {
                 data-loc="${(r.locality ?? '').replace(/"/g,'&quot;')}"
                 onclick="otworzPrzelicznik(this)">Przelicz</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   PATCH: renderDistrictTable — heatmapa zł/m²
-══════════════════════════════════════════════════════════════════ */
-(function() {
-  const oryginalna = renderDistrictTable;
-  renderDistrictTable = function() {
-    oryginalna();
-    // Po renderze — dodaj kolory tła do komórek Śr. zł/m²
-    const wiersze = document.querySelectorAll('#district-tbody tr');
-    if (wiersze.length === 0) return;
-    const wartosci = districtData.map(d => d.avgSqm).filter(x => x !== null);
-    if (wartosci.length === 0) return;
-    const minSqm = Math.min(...wartosci);
-    const maxSqm = Math.max(...wartosci);
-    const range  = maxSqm - minSqm || 1;
 
-    wiersze.forEach(tr => {
-      // 5. kolumna (index 4) = Śr. zł/m²
-      const td = tr.cells[4];
-      if (!td) return;
-      const tekst = td.textContent.replace(/\s+/g, '').replace(/[^\d]/g,'');
-      const val   = parseInt(tekst);
-      if (isNaN(val)) return;
-      const t = (val - minSqm) / range; // 0=najtańszy, 1=najdroższy
-      // Interpolacja alfa: zielony -> czerwony
-      const r = Math.round(t * 239 + (1-t) * 34);
-      const g = Math.round(t * 68  + (1-t) * 197);
-      const b = Math.round(t * 68  + (1-t) * 94);
-      td.style.background = `rgba(${r},${g},${b},0.15)`;
+/* ═══════════════════════════════════════════════════════════════
+   DODAWANIE MIAST — autocomplete, scraping, aktualizacja
+══════════════════════════════════════════════════════════════════ */
+
+let listaMiastCache = null;       // cache z /api/cities/all
+let ddActiveIndex   = -1;         // aktywna pozycja w dropdownie (klawiatura)
+let ddFiltrowane    = [];         // aktualnie widoczne pozycje w dropdownie
+
+// Pobiera listę miast z API (z cache)
+async function pobierzListeMiast() {
+  if (listaMiastCache) return listaMiastCache;
+  try {
+    const resp = await fetch(`${API}/api/cities/all`);
+    if (!resp.ok) return [];
+    listaMiastCache = await resp.json();
+  } catch {
+    listaMiastCache = [];
+  }
+  return listaMiastCache;
+}
+
+// Obsługa wpisywania w pole wyszukiwania
+async function onCitySearchInput() {
+  const q = document.getElementById('city-search').value.trim().toLowerCase();
+  if (q.length < 1) { zamknijDropdown(); return; }
+  const lista = await pobierzListeMiast();
+  ddFiltrowane = lista.filter(m =>
+    m.name.toLowerCase().includes(q) || m.slug.toLowerCase().includes(q)
+  ).slice(0, 25);
+  ddActiveIndex = -1;
+  renderDropdown(ddFiltrowane);
+}
+
+// Prefetch przy focus (bez wpisywania) — inicjuje pobieranie cache
+function onCitySearchFocus() {
+  pobierzListeMiast(); // fire and forget
+}
+
+// Nawigacja klawiaturą po dropdownie
+function onCitySearchKeydown(e) {
+  const items = document.querySelectorAll('.city-dd-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    ddActiveIndex = Math.min(ddActiveIndex + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('active', i === ddActiveIndex));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    ddActiveIndex = Math.max(ddActiveIndex - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('active', i === ddActiveIndex));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (ddActiveIndex >= 0 && ddFiltrowane[ddActiveIndex]) {
+      const m = ddFiltrowane[ddActiveIndex];
+      wybierzMiasto(m.slug, m.name);
+    }
+  } else if (e.key === 'Escape') {
+    zamknijDropdown();
+  }
+}
+
+// Renderuje listę dopasowań
+function renderDropdown(miasta) {
+  const dd = document.getElementById('city-dropdown');
+  if (miasta.length === 0) {
+    dd.innerHTML = '<div class="city-dd-empty">Brak wyników</div>';
+    dd.classList.add('open');
+    return;
+  }
+  dd.innerHTML = miasta.map((m, i) => `
+    <div class="city-dd-item" data-idx="${i}"
+         onclick="wybierzMiasto('${m.slug}', '${m.name.replace(/'/g, "\\'")}')">
+      <span>${m.name}</span>
+      <span class="city-dd-slug">${m.slug}</span>
+    </div>`).join('');
+  dd.classList.add('open');
+}
+
+function zamknijDropdown() {
+  document.getElementById('city-dropdown').classList.remove('open');
+  ddActiveIndex = -1;
+}
+
+// Wybranie miasta z dropdownu → scraping
+function wybierzMiasto(slug, nazwa) {
+  zamknijDropdown();
+  document.getElementById('city-search').value = '';
+  scrapujMiasto(slug, nazwa);
+}
+
+// Główna funkcja scrapingu — wywołuje POST /api/scrape, ładuje dane
+async function scrapujMiasto(slug, nazwa, pages = 8) {
+  otworzProgressModal(`Scrapuję: ${nazwa}`);
+  try {
+    const resp = await fetch(`${API}/api/scrape`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ city: slug, pages }),
     });
-  };
-})();
+
+    const json = await resp.json();
+    if (!resp.ok) {
+      throw new Error(json.detail || `HTTP ${resp.status}`);
+    }
+
+    zamknijProgressModal();
+
+    // Załaduj dane do stanu globalnego (jak loadCity, ale bez fetch /api/data)
+    selectedIds.clear();
+    currentCity = slug;
+    allData = json.data;
+    resetFilters();
+    sortCol = null; sortDir = 1;
+    document.querySelectorAll('.sort-arrow').forEach(el => el.textContent = '');
+    document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+    document.getElementById('sort-info').textContent = 'Sortowanie: —';
+    updateTicker(allData);
+    buildStats(allData);
+
+    dodajPrzyciskMiasta(slug, json.label || nazwa);
+  } catch (e) {
+    zamknijProgressModal();
+    alert(`Błąd scrapowania: ${e.message}`);
+  }
+}
+
+// Dodaje przycisk miasta do paska (jeśli jeszcze nie istnieje) i oznacza aktywny
+function dodajPrzyciskMiasta(slug, nazwa) {
+  const btns = document.getElementById('city-btns');
+  let btn = btns.querySelector(`[data-city="${slug}"]`);
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.className = 'city-btn';
+    btn.dataset.city = slug;
+    btn.textContent = nazwa;
+    btn.onclick = () => loadCity(slug);
+    btns.appendChild(btn);
+  }
+  document.querySelectorAll('.city-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.city === slug));
+}
+
+// Ponowny scraping aktualnie wyświetlanego miasta
+function aktualizujDane() {
+  if (!currentCity) return;
+  const btn = document.querySelector(`.city-btn[data-city="${currentCity}"]`);
+  const nazwa = btn ? btn.textContent : currentCity;
+  scrapujMiasto(currentCity, nazwa);
+}
+
+// Modal postępu
+function otworzProgressModal(msg) {
+  document.getElementById('progress-msg').textContent = msg;
+  document.getElementById('progress-overlay').classList.add('open');
+}
+function zamknijProgressModal() {
+  document.getElementById('progress-overlay').classList.remove('open');
+}
+
+// Zamknij dropdown po kliknięciu poza nim
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('city-search-wrap');
+  if (wrap && !wrap.contains(e.target)) zamknijDropdown();
+});
 
 /* ─── START ───────────────────────────────────────────────────── */
 init();

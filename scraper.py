@@ -89,8 +89,26 @@ def zapisz_csv(rekordy: list[dict], sciezka: str) -> None:
         writer.writerows(rekordy)
 
 
+def pobierz_dane(miasto: str, strony: int) -> list[dict]:
+    """
+    Scrapuje ogłoszenia i deduplikuje — zwraca rekordy bez zapisu do pliku.
+    Używane przez API; brak wydruków progresji.
+    """
+    wszystkie: list[dict] = []
+    with requests.Session() as sesja:
+        sesja.headers.update(HTTP_HEADERS)
+        for nr in range(1, strony + 1):
+            html = pobierz_strone(sesja, miasto, nr)
+            if html is None:
+                continue
+            wszystkie.extend(parsuj_strone(html))
+            if nr < strony:
+                time.sleep(0.5)
+    return deduplikuj(wszystkie)
+
+
 def uruchom(miasto: str, strony: int, plik_wyjsciowy: str) -> None:
-    """Główna logika: pobieranie, parsowanie, zapis."""
+    """Główna logika CLI: pobieranie z progresją, parsowanie, zapis."""
     print(f'Scrapuję: {miasto}, stron: {strony}')
     wszystkie: list[dict] = []
 
