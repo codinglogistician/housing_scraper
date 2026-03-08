@@ -958,7 +958,7 @@ tr.selected td { background: var(--amber-dim) !important; }
 }
 #city-search:focus { border-color: var(--amber); }
 .city-dropdown {
-  position: absolute; top: calc(100% + 4px); left: 0; z-index: 999;
+  position: fixed; z-index: 9999;
   background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
   min-width: 200px; max-height: 220px; overflow-y: auto;
   box-shadow: 0 4px 16px rgba(0,0,0,.4);
@@ -1097,6 +1097,9 @@ input[type="range"].budzet-slider {
   </div>
 </div>
 
+<!-- CITY AUTOCOMPLETE DROPDOWN — na poziomie body dla position:fixed -->
+<div id="city-dropdown" class="city-dropdown"></div>
+
 <!-- PROGRESS MODAL — scraping -->
 <div id="progress-overlay" class="modal-overlay">
   <div class="modal-box" style="text-align:center;padding:40px 48px;min-width:280px">
@@ -1123,7 +1126,6 @@ input[type="range"].budzet-slider {
       <input type="text" id="city-search" placeholder="+ inne miasto…" autocomplete="off"
              oninput="onCitySearchInput()" onfocus="onCitySearchFocus()"
              onkeydown="onCitySearchKeydown(event)">
-      <div id="city-dropdown" class="city-dropdown"></div>
     </div>
   </div>
   <div class="ticker-sep"></div>
@@ -2690,9 +2692,15 @@ function onCitySearchKeydown(e) {
   }
 }
 
-// Renderuje listę dopasowań
+// Renderuje listę dopasowań i pozycjonuje dropdown pod inputem (position: fixed)
 function renderDropdown(miasta) {
-  const dd = document.getElementById('city-dropdown');
+  const dd    = document.getElementById('city-dropdown');
+  const input = document.getElementById('city-search');
+  const rect  = input.getBoundingClientRect();
+  dd.style.top   = (rect.bottom + 4) + 'px';
+  dd.style.left  = rect.left + 'px';
+  dd.style.width = Math.max(220, rect.width) + 'px';
+
   if (miasta.length === 0) {
     dd.innerHTML = '<div class="city-dd-empty">Brak wyników</div>';
     dd.classList.add('open');
