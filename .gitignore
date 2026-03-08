@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.csv
+debug_*.html
+lista_adresow.txt
+adresowo_swinoujscie.csv
+.env
+venv/
+.venv/

@@ -1,0 +1,7 @@
+{
+  "name": "adresowo-scraper",
+  "description": "Kontekst projektowy scrapera adresowo.pl — konwencje kodu, komendy, architektura, typowe zadania agenta",
+  "author": {
+    "name": "Rafał Jabłoński"
+  }
+}

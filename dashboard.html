@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADRESOWO — Scraper Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS ─────────────────────────────────────────────────── */
+:root {
+  --bg:        #080b10;
+  --bg2:       #0e1218;
+  --bg3:       #141a24;
+  --bg4:       #1c2432;
+  --border:    #1f2d40;
+  --border2:   #2a3d57;
+  --text:      #c8d8e8;
+  --text2:     #6e8bad;
+  --text3:     #3d5575;
+  --amber:     #f0b429;
+  --amber2:    #ffd166;
+  --amber-dim: #f0b42920;
+  --green:     #22c55e;
+  --green-dim: #22c55e18;
+  --red:       #ef4444;
+  --red-dim:   #ef444418;
+  --blue:      #3b9eff;
+  --blue-dim:  #3b9eff14;
+  --cyan:      #06b6d4;
+  --radius:    4px;
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'Syne', sans-serif;
+  --shadow:    0 2px 20px #00000080;
+}
+[data-theme="light"] {
+  --bg:        #f0f4f8;
+  --bg2:       #ffffff;
+  --bg3:       #e8edf5;
+  --bg4:       #dde5f0;
+  --border:    #c8d4e8;
+  --border2:   #a8bcdb;
+  --text:      #1a2a3a;
+  --text2:     #4a6280;
+  --text3:     #8aa0ba;
+  --amber:     #d4920a;
+  --amber2:    #b87a00;
+  --amber-dim: #f0b42920;
+  --green:     #16a34a;
+  --green-dim: #16a34a18;
+  --red:       #dc2626;
+  --red-dim:   #dc262618;
+  --blue:      #1d6fd8;
+  --blue-dim:  #1d6fd814;
+  --cyan:      #0891b2;
+  --shadow:    0 2px 20px #0000001a;
+}
+
+/* ─── RESET ──────────────────────────────────────────────────── */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { height:100%; }
+body {
+  font-family: var(--mono);
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  line-height: 1.5;
+  transition: background .2s, color .2s;
+}
+
+/* ─── TOPBAR ─────────────────────────────────────────────────── */
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  height: 44px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 100;
+}
+#topbar .logo {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: .08em;
+  color: var(--amber);
+  text-transform: uppercase;
+}
+#topbar .logo span { color: var(--text2); font-weight: 400; font-size: 11px; margin-left: 8px; }
+.ticker-sep { width: 1px; height: 20px; background: var(--border); }
+#stats-ticker {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+.tick-item { display: flex; gap: 6px; align-items: baseline; white-space: nowrap; }
+.tick-label { color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.tick-val { color: var(--amber); font-weight: 500; font-size: 12px; }
+.tick-val.up { color: var(--green); }
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text2); cursor: pointer; padding: 4px 10px; font-family: var(--mono);
+  font-size: 11px; transition: all .15s;
+}
+#theme-toggle:hover { border-color: var(--amber); color: var(--amber); }
+.city-btn {
+  background: none; border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text2); cursor: pointer; padding: 3px 10px; font-family: var(--mono);
+  font-size: 11px; transition: all .15s; white-space: nowrap;
+}
+.city-btn:hover { border-color: var(--amber); color: var(--amber); }
+.city-btn.active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); font-weight:700; }
+.district-table th.sortable { cursor: pointer; user-select: none; }
+.district-table th.sortable:hover { color: var(--amber); }
+.district-table th.sorted-asc::after  { content: ' ↑'; color: var(--amber); }
+.district-table th.sorted-desc::after { content: ' ↓'; color: var(--amber); }
+
+/* ─── TABS ───────────────────────────────────────────────────── */
+#tabs {
+  display: flex;
+  gap: 0;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  padding: 0 16px;
+}
+.tab {
+  padding: 8px 18px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  user-select: none;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+/* ─── LAYOUT ─────────────────────────────────────────────────── */
+#app { display: flex; flex: 1; overflow: hidden; }
+.panel { display: none; flex: 1; overflow: hidden; }
+.panel.active { display: flex; }
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+#sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.filter-group { display: flex; flex-direction: column; gap: 6px; }
+.filter-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+.filter-row { display: flex; gap: 6px; align-items: center; }
+.filter-row label { color: var(--text3); font-size: 10px; width: 28px; flex-shrink: 0; }
+input[type="text"], input[type="number"] {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 8px;
+  width: 100%;
+  transition: border-color .15s;
+  outline: none;
+}
+input[type="text"]:focus, input[type="number"]:focus {
+  border-color: var(--amber);
+}
+input::placeholder { color: var(--text3); }
+.btn-reset {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text3);
+  cursor: pointer;
+  padding: 5px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  width: 100%;
+  transition: all .15s;
+  letter-spacing: .04em;
+}
+.btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+/* ─── MAIN CONTENT ───────────────────────────────────────────── */
+#main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ─── STATUS BAR ─────────────────────────────────────────────── */
+#statusbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 5px 14px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.status-badge {
+  font-size: 10px;
+  color: var(--text2);
+}
+.status-badge span { color: var(--amber); font-weight: 500; }
+#search-global {
+  flex: 1; max-width: 280px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  outline: none;
+  transition: border-color .15s;
+}
+#search-global:focus { border-color: var(--blue); }
+.sort-indicator { color: var(--text3); font-size: 10px; margin-left: auto; }
+
+/* ─── TABLE ──────────────────────────────────────────────────── */
+#table-wrap { flex: 1; overflow: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+thead { position: sticky; top: 0; z-index: 10; }
+th {
+  background: var(--bg3);
+  border-bottom: 2px solid var(--border2);
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color .15s;
+}
+th:hover { color: var(--amber); }
+th.sorted { color: var(--amber); }
+th .sort-arrow { margin-left: 4px; opacity: .6; }
+td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+tr:hover td { background: var(--bg4); }
+td.num { text-align: right; color: var(--amber2); font-weight: 500; }
+td.locality { color: var(--cyan); }
+td.link a {
+  color: var(--blue);
+  text-decoration: none;
+  font-size: 10px;
+  opacity: .7;
+  transition: opacity .15s;
+}
+td.link a:hover { opacity: 1; text-decoration: underline; }
+tr:nth-child(even) td { background: var(--bg2); }
+tr:nth-child(even):hover td { background: var(--bg4); }
+
+/* Column widths */
+th:nth-child(1), td:nth-child(1) { width: 80px; }
+th:nth-child(2), td:nth-child(2) { width: 180px; }
+th:nth-child(3), td:nth-child(3) { width: 60px; }
+th:nth-child(4), td:nth-child(4) { width: 80px; }
+th:nth-child(5), td:nth-child(5) { width: 110px; }
+th:nth-child(6), td:nth-child(6) { width: 110px; }
+th:nth-child(7), td:nth-child(7) { width: auto; }
+
+/* ─── PAGINATION ─────────────────────────────────────────────── */
+#pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.pg-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text2);
+  cursor: pointer;
+  padding: 3px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  transition: all .15s;
+}
+.pg-btn:hover:not(:disabled) { border-color: var(--amber); color: var(--amber); }
+.pg-btn:disabled { opacity: .3; cursor: default; }
+.pg-info { color: var(--text3); font-size: 10px; margin: 0 4px; }
+.pg-jump { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.pg-jump label { color: var(--text3); font-size: 10px; }
+#page-size {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  cursor: pointer;
+  outline: none;
+}
+
+/* ─── STATS PANEL ────────────────────────────────────────────── */
+#stats-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--amber);
+}
+.stat-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--amber2);
+  line-height: 1;
+}
+.stat-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
+.district-table { width: 100%; }
+.district-table th { background: var(--bg3); }
+.bar-cell { width: 120px; padding-right: 14px !important; }
+.bar-wrap { background: var(--bg3); border-radius: 2px; height: 6px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--amber); border-radius: 2px; transition: width .4s ease; }
+
+/* ─── TEST RUNNER ────────────────────────────────────────────── */
+#tests-panel {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+#tests-sidebar {
+  width: 340px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#tests-toolbar {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.btn-run {
+  background: var(--amber);
+  border: none;
+  border-radius: var(--radius);
+  color: #000;
+  cursor: pointer;
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.btn-run:hover { background: var(--amber2); }
+.btn-run:disabled { opacity: .4; cursor: default; }
+.btn-run-selected {
+  background: none;
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  color: var(--amber);
+  cursor: pointer;
+  padding: 6px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.btn-run-selected:hover { background: var(--amber-dim); }
+.btn-run-selected:disabled { opacity: .4; cursor: default; }
+.select-all-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text3);
+  cursor: pointer;
+  user-select: none;
+}
+#tests-list { flex: 1; overflow-y: auto; }
+.test-group { border-bottom: 1px solid var(--border); }
+.test-group-header {
+  padding: 7px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.test-group-header:hover { background: var(--bg4); }
+.group-badge {
+  margin-left: auto;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--bg4);
+  color: var(--text3);
+}
+.group-badge.all-pass { background: var(--green-dim); color: var(--green); }
+.group-badge.has-fail { background: var(--red-dim); color: var(--red); }
+.test-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 28px;
+  cursor: pointer;
+  transition: background .1s;
+  border-bottom: 1px solid var(--border);
+}
+.test-item:last-child { border-bottom: none; }
+.test-item:hover { background: var(--bg3); }
+.test-item input[type="checkbox"] {
+  width: 13px; height: 13px; flex-shrink: 0;
+  accent-color: var(--amber);
+  cursor: pointer;
+}
+.test-name {
+  flex: 1;
+  font-size: 10px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.test-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: .04em;
+}
+.test-status.PASSED { background: var(--green-dim); color: var(--green); }
+.test-status.FAILED { background: var(--red-dim); color: var(--red); }
+.test-status.ERROR  { background: var(--red-dim); color: var(--red); }
+.test-status.RUNNING { background: var(--amber-dim); color: var(--amber); animation: pulse .8s infinite; }
+.test-status.PENDING { color: var(--text3); }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+
+/* ─── TEST OUTPUT ────────────────────────────────────────────── */
+#tests-output {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#tests-output-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.output-title {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+#run-summary {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 3px;
+}
+#run-summary.ok  { background: var(--green-dim); color: var(--green); }
+#run-summary.err { background: var(--red-dim); color: var(--red); }
+#run-summary.idle { color: var(--text3); }
+#stdout-wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px;
+}
+#stdout-box {
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--text2);
+}
+.stdout-pass { color: var(--green); }
+.stdout-fail { color: var(--red); }
+.stdout-warn { color: var(--amber); }
+.stdout-line { display: block; }
+
+/* ─── LOADER ─────────────────────────────────────────────────── */
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 9999;
+  transition: opacity .3s;
+}
+.loader-logo {
+  font-family: var(--sans);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--amber);
+  letter-spacing: .1em;
+}
+.loader-bar-wrap {
+  width: 200px;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.loader-bar {
+  height: 100%;
+  background: var(--amber);
+  border-radius: 2px;
+  animation: load-anim 1.2s ease-in-out infinite;
+}
+@keyframes load-anim {
+  0% { width: 0; margin-left: 0; }
+  50% { width: 60%; margin-left: 20%; }
+  100% { width: 0; margin-left: 100%; }
+}
+.loader-msg { font-size: 11px; color: var(--text3); letter-spacing: .06em; }
+
+/* ─── EMPTY STATE ────────────────────────────────────────────── */
+#empty-row td {
+  text-align: center;
+  padding: 40px;
+  color: var(--text3);
+  font-size: 13px;
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-logo">ADRESOWO</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-msg">Ładowanie danych...</div>
+</div>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">Adresowo <span>Scraper Dashboard v1.0</span></div>
+  <div class="ticker-sep"></div>
+  <div id="city-selector" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+    <span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)">Miasto</span>
+    <div id="city-btns" style="display:flex;gap:4px;"></div>
+  </div>
+  <div class="ticker-sep"></div>
+  <div id="stats-ticker">
+    <div class="tick-item"><span class="tick-label">Rekordów</span><span class="tick-val" id="t-count">—</span></div>
+    <div class="tick-item"><span class="tick-label">Śr. cena</span><span class="tick-val" id="t-avg-price">—</span></div>
+    <div class="tick-item"><span class="tick-label">Śr. m²</span><span class="tick-val" id="t-avg-area">—</span></div>
+    <div class="tick-item"><span class="tick-label">Śr. zł/m²</span><span class="tick-val" id="t-avg-sqm">—</span></div>
+    <div class="tick-item"><span class="tick-label">Min cena</span><span class="tick-val" id="t-min-price">—</span></div>
+    <div class="tick-item"><span class="tick-label">Max cena</span><span class="tick-val" id="t-max-price">—</span></div>
+  </div>
+  <button id="theme-toggle" onclick="toggleTheme()">☾ Dark</button>
+</div>
+
+<!-- TABS -->
+<div id="tabs">
+  <div class="tab active" data-tab="data">Ogłoszenia</div>
+  <div class="tab" data-tab="stats">Statystyki</div>
+  <div class="tab" data-tab="tests">Test Runner</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- ═══ TAB: DATA ══════════════════════════════════════════ -->
+  <div class="panel active" id="panel-data">
+    <!-- Sidebar filtry -->
+    <div id="sidebar">
+      <div class="filter-group">
+        <div class="filter-title">Lokalizacja</div>
+        <input type="text" id="f-locality" placeholder="Dzielnica..." oninput="applyFilters()">
+      </div>
+      <div class="filter-group">
+        <div class="filter-title">Pokoje</div>
+        <div class="filter-row">
+          <label>min</label>
+          <input type="number" id="f-rooms-min" placeholder="1" min="0" oninput="applyFilters()">
+        </div>
+        <div class="filter-row">
+          <label>max</label>
+          <input type="number" id="f-rooms-max" placeholder="10" min="0" oninput="applyFilters()">
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-title">Powierzchnia (m²)</div>
+        <div class="filter-row">
+          <label>min</label>
+          <input type="number" id="f-area-min" placeholder="0" oninput="applyFilters()">
+        </div>
+        <div class="filter-row">
+          <label>max</label>
+          <input type="number" id="f-area-max" placeholder="300" oninput="applyFilters()">
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-title">Cena całkowita (zł)</div>
+        <div class="filter-row">
+          <label>min</label>
+          <input type="number" id="f-price-min" placeholder="0" oninput="applyFilters()">
+        </div>
+        <div class="filter-row">
+          <label>max</label>
+          <input type="number" id="f-price-max" placeholder="5000000" oninput="applyFilters()">
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-title">Cena za m² (zł)</div>
+        <div class="filter-row">
+          <label>min</label>
+          <input type="number" id="f-sqm-min" placeholder="0" oninput="applyFilters()">
+        </div>
+        <div class="filter-row">
+          <label>max</label>
+          <input type="number" id="f-sqm-max" placeholder="30000" oninput="applyFilters()">
+        </div>
+      </div>
+      <button class="btn-reset" onclick="resetFilters()">✕ Wyczyść filtry</button>
+    </div>
+
+    <!-- Tabela -->
+    <div id="main-content">
+      <div id="statusbar">
+        <div class="status-badge">Wyników: <span id="result-count">—</span> / <span id="total-count">—</span></div>
+        <input type="text" id="search-global" placeholder="Szukaj..." oninput="applyFilters()">
+        <div class="sort-indicator" id="sort-info">Sortowanie: —</div>
+      </div>
+      <div id="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortBy('id')">ID <span class="sort-arrow" id="s-id"></span></th>
+              <th onclick="sortBy('locality')">Dzielnica <span class="sort-arrow" id="s-locality"></span></th>
+              <th onclick="sortBy('rooms')">Pok. <span class="sort-arrow" id="s-rooms"></span></th>
+              <th onclick="sortBy('area_m2')">m² <span class="sort-arrow" id="s-area_m2"></span></th>
+              <th onclick="sortBy('price_total_zl')">Cena (zł) <span class="sort-arrow" id="s-price_total_zl"></span></th>
+              <th onclick="sortBy('price_per_m2_zl')">zł/m² <span class="sort-arrow" id="s-price_per_m2_zl"></span></th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div id="pagination">
+        <button class="pg-btn" id="pg-first" onclick="goPage(1)">«</button>
+        <button class="pg-btn" id="pg-prev"  onclick="goPage(currentPage-1)">‹</button>
+        <span class="pg-info" id="pg-label">—</span>
+        <button class="pg-btn" id="pg-next"  onclick="goPage(currentPage+1)">›</button>
+        <button class="pg-btn" id="pg-last"  onclick="goPage(totalPages)">»</button>
+        <div class="pg-jump">
+          <label>Wierszy:</label>
+          <select id="page-size" onchange="changePageSize()">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: STATS ══════════════════════════════════════════ -->
+  <div class="panel" id="panel-stats">
+    <div id="stats-panel">
+      <div class="stats-grid" id="stats-cards"></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+        <table class="district-table">
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortDistricts('name')">Dzielnica</th>
+              <th class="sortable" style="text-align:right" onclick="sortDistricts('count')">Ogłoszeń</th>
+              <th class="sortable" style="text-align:right" onclick="sortDistricts('avgPrice')">Śr. cena (zł)</th>
+              <th class="sortable" style="text-align:right" onclick="sortDistricts('avgArea')">Śr. m²</th>
+              <th class="sortable" style="text-align:right" onclick="sortDistricts('avgSqm')">Śr. zł/m²</th>
+              <th class="bar-cell">Udział</th>
+            </tr>
+          </thead>
+          <tbody id="district-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: TESTS ══════════════════════════════════════════ -->
+  <div class="panel" id="panel-tests">
+    <div id="tests-sidebar">
+      <div id="tests-toolbar">
+        <button class="btn-run" id="btn-run-all" onclick="runTests(false)">▶ Uruchom wszystkie</button>
+        <button class="btn-run-selected" id="btn-run-sel" onclick="runTests(true)">▶ Wybrane</button>
+        <label class="select-all-wrap">
+          <input type="checkbox" id="chk-all" onchange="toggleAllTests(this.checked)"> Wszystkie
+        </label>
+      </div>
+      <div id="tests-list"></div>
+    </div>
+    <div id="tests-output">
+      <div id="tests-output-header">
+        <div class="output-title">Wyniki testów</div>
+        <div id="run-summary" class="idle">Nie uruchomiono</div>
+      </div>
+      <div id="stdout-wrap">
+        <div id="stdout-box">Uruchom testy, aby zobaczyć wyniki...</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   STAN GLOBALNY
+══════════════════════════════════════════════════════════════════ */
+let allData = [];
+let filteredData = [];
+let currentPage = 1;
+let pageSize = 50;
+let totalPages = 1;
+let sortCol = null;
+let sortDir = 1; // 1=ASC, -1=DESC
+
+let currentCity = 'lodz';
+let districtSortCol = 'count';
+let districtSortDir = -1; // -1=DESC domyślnie
+let districtData = []; // cache dla sortowania
+
+const API = 'http://localhost:8001';
+
+/* ═══════════════════════════════════════════════════════════════
+   INICJALIZACJA
+══════════════════════════════════════════════════════════════════ */
+async function init() {
+  await buildCityButtons();
+  await loadCity(currentCity);
+  buildTestList();
+  document.getElementById('loader').style.opacity = '0';
+  setTimeout(() => document.getElementById('loader').style.display = 'none', 300);
+}
+
+async function buildCityButtons() {
+  try {
+    const resp = await fetch(`${API}/api/cities`);
+    const cities = await resp.json();
+    const container = document.getElementById('city-btns');
+    container.innerHTML = cities.map(c => `
+      <button class="city-btn${c.key === currentCity ? ' active' : ''}"
+              data-city="${c.key}"
+              onclick="loadCity('${c.key}')"
+              ${!c.available ? 'disabled title="Brak pliku CSV"' : ''}>
+        ${c.label}
+      </button>`).join('');
+  } catch(e) {
+    // Fallback — statyczne przyciski
+    document.getElementById('city-btns').innerHTML = `
+      <button class="city-btn active" onclick="loadCity('lodz')">Łódź</button>
+      <button class="city-btn" onclick="loadCity('poznan')">Poznań</button>
+      <button class="city-btn" onclick="loadCity('swinoujscie')">Świnoujście</button>`;
+  }
+}
+
+async function loadCity(city) {
+  currentCity = city;
+  // Aktualizuj aktywny przycisk
+  document.querySelectorAll('.city-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.city === city);
+  });
+  // Reset filtrów i sortowania tabeli
+  resetFilters();
+  sortCol = null;
+  sortDir = 1;
+  document.querySelectorAll('.sort-arrow').forEach(el => el.textContent = '');
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  document.getElementById('sort-info').textContent = 'Sortowanie: —';
+
+  try {
+    const resp = await fetch(`${API}/api/data?city=${city}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    allData = json.data;
+    applyFilters();
+    updateTicker(allData);
+    buildStats(allData);
+  } catch(e) {
+    document.getElementById('tbody').innerHTML =
+      `<tr id="empty-row"><td colspan="7">⚠ Błąd: ${e.message}<br><small>Uruchom: uvicorn api:app --port 8001</small></td></tr>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TICKER
+══════════════════════════════════════════════════════════════════ */
+function updateTicker(data) {
+  const prices = data.map(r => r.price_total_zl).filter(Boolean);
+  const areas  = data.map(r => r.area_m2).filter(Boolean);
+  const sqms   = data.map(r => r.price_per_m2_zl).filter(Boolean);
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0;
+  const fmt = n => n ? n.toLocaleString('pl-PL') : '—';
+  document.getElementById('t-count').textContent     = data.length.toLocaleString('pl-PL');
+  document.getElementById('t-avg-price').textContent = fmt(avg(prices)) + ' zł';
+  document.getElementById('t-avg-area').textContent  = avg(areas).toFixed(1) + ' m²';
+  document.getElementById('t-avg-sqm').textContent   = fmt(avg(sqms)) + ' zł';
+  document.getElementById('t-min-price').textContent = fmt(Math.min(...prices)) + ' zł';
+  document.getElementById('t-max-price').textContent = fmt(Math.max(...prices)) + ' zł';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FILTRY
+══════════════════════════════════════════════════════════════════ */
+function getNum(id) { const v = document.getElementById(id).value; return v === '' ? null : parseFloat(v); }
+function getStr(id) { return document.getElementById(id).value.trim().toLowerCase(); }
+
+function applyFilters() {
+  const locality  = getStr('f-locality');
+  const roomsMin  = getNum('f-rooms-min');
+  const roomsMax  = getNum('f-rooms-max');
+  const areaMin   = getNum('f-area-min');
+  const areaMax   = getNum('f-area-max');
+  const priceMin  = getNum('f-price-min');
+  const priceMax  = getNum('f-price-max');
+  const sqmMin    = getNum('f-sqm-min');
+  const sqmMax    = getNum('f-sqm-max');
+  const global    = getStr('search-global');
+
+  filteredData = allData.filter(r => {
+    if (locality && !r.locality?.toLowerCase().includes(locality)) return false;
+    if (roomsMin !== null && (r.rooms === null || r.rooms < roomsMin)) return false;
+    if (roomsMax !== null && (r.rooms === null || r.rooms > roomsMax)) return false;
+    if (areaMin  !== null && (r.area_m2 === null || r.area_m2 < areaMin)) return false;
+    if (areaMax  !== null && (r.area_m2 === null || r.area_m2 > areaMax)) return false;
+    if (priceMin !== null && (r.price_total_zl === null || r.price_total_zl < priceMin)) return false;
+    if (priceMax !== null && (r.price_total_zl === null || r.price_total_zl > priceMax)) return false;
+    if (sqmMin   !== null && (r.price_per_m2_zl === null || r.price_per_m2_zl < sqmMin)) return false;
+    if (sqmMax   !== null && (r.price_per_m2_zl === null || r.price_per_m2_zl > sqmMax)) return false;
+    if (global) {
+      const hay = `${r.id} ${r.locality} ${r.url}`.toLowerCase();
+      if (!hay.includes(global)) return false;
+    }
+    return true;
+  });
+
+  if (sortCol) applySort();
+  currentPage = 1;
+  renderTable();
+  document.getElementById('result-count').textContent = filteredData.length.toLocaleString('pl-PL');
+  document.getElementById('total-count').textContent  = allData.length.toLocaleString('pl-PL');
+}
+
+function resetFilters() {
+  ['f-locality','f-rooms-min','f-rooms-max','f-area-min','f-area-max',
+   'f-price-min','f-price-max','f-sqm-min','f-sqm-max','search-global']
+    .forEach(id => document.getElementById(id).value = '');
+  applyFilters();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SORTOWANIE
+══════════════════════════════════════════════════════════════════ */
+function sortBy(col) {
+  if (sortCol === col) { sortDir *= -1; }
+  else { sortCol = col; sortDir = 1; }
+  applySort();
+  renderTable();
+  document.getElementById('sort-info').textContent = `Sortowanie: ${col} ${sortDir===1?'↑':'↓'}`;
+  document.querySelectorAll('.sort-arrow').forEach(el => el.textContent = '');
+  const arrow = document.getElementById(`s-${col}`);
+  if (arrow) arrow.textContent = sortDir === 1 ? '↑' : '↓';
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  document.querySelectorAll('th').forEach(th => {
+    if (th.onclick?.toString().includes(`'${col}'`)) th.classList.add('sorted');
+  });
+}
+
+function applySort() {
+  const d = sortDir;
+  filteredData.sort((a, b) => {
+    const av = a[sortCol], bv = b[sortCol];
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (typeof av === 'string') return d * av.localeCompare(bv, 'pl');
+    return d * (av - bv);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER TABELI
+══════════════════════════════════════════════════════════════════ */
+function renderTable() {
+  totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * pageSize;
+  const page  = filteredData.slice(start, start + pageSize);
+  const fmt   = n => n !== null && n !== undefined ? n.toLocaleString('pl-PL') : '—';
+
+  const tbody = document.getElementById('tbody');
+  if (page.length === 0) {
+    tbody.innerHTML = '<tr id="empty-row"><td colspan="7">Brak wyników dla podanych filtrów</td></tr>';
+  } else {
+    tbody.innerHTML = page.map(r => `
+      <tr>
+        <td>${r.id ?? '—'}</td>
+        <td class="locality">${r.locality ?? '—'}</td>
+        <td class="num">${r.rooms ?? '—'}</td>
+        <td class="num">${r.area_m2 !== null ? r.area_m2.toFixed(1) : '—'}</td>
+        <td class="num">${fmt(r.price_total_zl)}</td>
+        <td class="num">${fmt(r.price_per_m2_zl)}</td>
+        <td class="link"><a href="${r.url}" target="_blank" title="${r.url}">↗ otwórz</a></td>
+      </tr>`).join('');
+  }
+
+  document.getElementById('pg-label').textContent =
+    `Str. ${currentPage} / ${totalPages}  (${start+1}–${Math.min(start+pageSize, filteredData.length)} z ${filteredData.length})`;
+  document.getElementById('pg-first').disabled = currentPage <= 1;
+  document.getElementById('pg-prev').disabled  = currentPage <= 1;
+  document.getElementById('pg-next').disabled  = currentPage >= totalPages;
+  document.getElementById('pg-last').disabled  = currentPage >= totalPages;
+}
+
+function goPage(n) {
+  currentPage = Math.max(1, Math.min(n, totalPages));
+  renderTable();
+}
+function changePageSize() {
+  pageSize = parseInt(document.getElementById('page-size').value);
+  currentPage = 1;
+  renderTable();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATYSTYKI
+══════════════════════════════════════════════════════════════════ */
+function buildStats(data) {
+  const prices = data.map(r => r.price_total_zl).filter(x => x !== null);
+  const areas  = data.map(r => r.area_m2).filter(x => x !== null);
+  const sqms   = data.map(r => r.price_per_m2_zl).filter(x => x !== null);
+  const avg    = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+  const fmt    = n => n.toLocaleString('pl-PL');
+  const median = arr => { const s=[...arr].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+
+  const cards = [
+    { label:'Łączna liczba rekordów', value: data.length.toLocaleString('pl-PL'), sub:'ogłoszeń' },
+    { label:'Średnia cena', value: fmt(Math.round(avg(prices)))+' zł', sub:`mediana: ${fmt(Math.round(median(prices)))} zł` },
+    { label:'Średnia powierzchnia', value: avg(areas).toFixed(1)+' m²', sub:`mediana: ${median(areas).toFixed(1)} m²` },
+    { label:'Średnia cena / m²', value: fmt(Math.round(avg(sqms)))+' zł', sub:`mediana: ${fmt(Math.round(median(sqms)))} zł` },
+    { label:'Najtańsze ogłoszenie', value: fmt(Math.min(...prices))+' zł', sub:'' },
+    { label:'Najdroższe ogłoszenie', value: fmt(Math.max(...prices))+' zł', sub:'' },
+    { label:'Min. cena / m²', value: fmt(Math.min(...sqms))+' zł', sub:'' },
+    { label:'Max. cena / m²', value: fmt(Math.max(...sqms))+' zł', sub:'' },
+  ];
+
+  document.getElementById('stats-cards').innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="stat-label">${c.label}</div>
+      <div class="stat-value">${c.value}</div>
+      ${c.sub ? `<div class="stat-sub">${c.sub}</div>` : ''}
+    </div>`).join('');
+
+  // Zbuduj dane dzielnic i zapisz w cache
+  const districts = {};
+  data.forEach(r => {
+    const d = r.locality || '(brak)';
+    if (!districts[d]) districts[d] = { count:0, prices:[], areas:[], sqms:[] };
+    districts[d].count++;
+    if (r.price_total_zl)  districts[d].prices.push(r.price_total_zl);
+    if (r.area_m2)         districts[d].areas.push(r.area_m2);
+    if (r.price_per_m2_zl) districts[d].sqms.push(r.price_per_m2_zl);
+  });
+
+  districtData = Object.entries(districts).map(([name, d]) => ({
+    name,
+    count:    d.count,
+    avgPrice: d.prices.length ? Math.round(avg(d.prices)) : null,
+    avgArea:  d.areas.length  ? avg(d.areas) : null,
+    avgSqm:   d.sqms.length   ? Math.round(avg(d.sqms)) : null,
+  }));
+
+  renderDistrictTable();
+}
+
+function sortDistricts(col) {
+  if (districtSortCol === col) {
+    districtSortDir *= -1;
+  } else {
+    districtSortCol = col;
+    districtSortDir = col === 'name' ? 1 : -1;
+  }
+  renderDistrictTable();
+}
+
+function renderDistrictTable() {
+  const fmt = n => n !== null ? n.toLocaleString('pl-PL') : '—';
+
+  const sorted = [...districtData].sort((a, b) => {
+    const av = a[districtSortCol], bv = b[districtSortCol];
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (typeof av === 'string') return districtSortDir * av.localeCompare(bv, 'pl');
+    return districtSortDir * (av - bv);
+  });
+
+  const maxCount = Math.max(...sorted.map(d => d.count));
+
+  document.getElementById('district-tbody').innerHTML = sorted.map(d => {
+    const pct = Math.round(d.count / maxCount * 100);
+    return `
+      <tr>
+        <td class="locality">${d.name}</td>
+        <td class="num">${d.count}</td>
+        <td class="num">${d.avgPrice !== null ? fmt(d.avgPrice)+' zł' : '—'}</td>
+        <td class="num">${d.avgArea  !== null ? d.avgArea.toFixed(1) : '—'}</td>
+        <td class="num">${d.avgSqm   !== null ? fmt(d.avgSqm)+' zł'  : '—'}</td>
+        <td class="bar-cell">
+          <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // Aktualizuj klasy nagłówków
+  document.querySelectorAll('.district-table th.sortable').forEach(th => {
+    th.classList.remove('sorted-asc','sorted-desc');
+  });
+  const cols = ['name','count','avgPrice','avgArea','avgSqm'];
+  const thList = document.querySelectorAll('.district-table th.sortable');
+  const idx = cols.indexOf(districtSortCol);
+  if (idx >= 0 && thList[idx]) {
+    thList[idx].classList.add(districtSortDir === 1 ? 'sorted-asc' : 'sorted-desc');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TEST RUNNER
+══════════════════════════════════════════════════════════════════ */
+const TEST_GROUPS = [
+  { name:'TestLiczbaOgloszen', tests:[
+    'test_parser.py::TestLiczbaOgloszen::test_parsuje_cztery_rekordy',
+    'test_parser.py::TestLiczbaOgloszen::test_zadny_rekord_nie_jest_none',
+    'test_parser.py::TestLiczbaOgloszen::test_pusty_html_zwraca_pusta_liste',
+  ]},
+  { name:'TestPierwszeOgloszenie', tests:[
+    'test_parser.py::TestPierwszeOgloszenie::test_id',
+    'test_parser.py::TestPierwszeOgloszenie::test_locality',
+    'test_parser.py::TestPierwszeOgloszenie::test_rooms',
+    'test_parser.py::TestPierwszeOgloszenie::test_area_m2',
+    'test_parser.py::TestPierwszeOgloszenie::test_price_total_zl',
+    'test_parser.py::TestPierwszeOgloszenie::test_price_per_m2_wyliczona',
+    'test_parser.py::TestPierwszeOgloszenie::test_url_zaczyna_sie_od_base',
+    'test_parser.py::TestPierwszeOgloszenie::test_url_zawiera_slug_ulicy',
+  ]},
+  { name:'TestDrugieOgloszenie', tests:[
+    'test_parser.py::TestDrugieOgloszenie::test_id',
+    'test_parser.py::TestDrugieOgloszenie::test_locality',
+    'test_parser.py::TestDrugieOgloszenie::test_rooms',
+    'test_parser.py::TestDrugieOgloszenie::test_area_m2',
+    'test_parser.py::TestDrugieOgloszenie::test_price_total_zl',
+    'test_parser.py::TestDrugieOgloszenie::test_price_per_m2_wyliczona',
+  ]},
+  { name:'TestPowierzchniaZPrzecinkiem', tests:[
+    'test_parser.py::TestPowierzchniaZPrzecinkiem::test_locality',
+    'test_parser.py::TestPowierzchniaZPrzecinkiem::test_area_m2_z_przecinkiem',
+    'test_parser.py::TestPowierzchniaZPrzecinkiem::test_price_total_zl',
+    'test_parser.py::TestPowierzchniaZPrzecinkiem::test_rooms',
+    'test_parser.py::TestPowierzchniaZPrzecinkiem::test_price_per_m2_wyliczona',
+  ]},
+  { name:'TestBrakujaceDane', tests:[
+    'test_parser.py::TestBrakujaceDane::test_brakujaca_cena_zwraca_none',
+    'test_parser.py::TestBrakujaceDane::test_brakujaca_powierzchnia_zwraca_none',
+    'test_parser.py::TestBrakujaceDane::test_price_per_m2_none_gdy_brak_skladnikow',
+    'test_parser.py::TestBrakujaceDane::test_brak_locality_wyklucza_rekord',
+    'test_parser.py::TestBrakujaceDane::test_brak_url_wyklucza_rekord',
+  ]},
+  { name:'TestIntZTekstu', tests:[
+    'test_parser.py::TestIntZTekstu::test_poprawne_wartosci[399 000-399000]',
+    'test_parser.py::TestIntZTekstu::test_poprawne_wartosci[399\\xa0000-399000]',
+    'test_parser.py::TestIntZTekstu::test_poprawne_wartosci[1000-1000]',
+    'test_parser.py::TestIntZTekstu::test_poprawne_wartosci[0-0]',
+    'test_parser.py::TestIntZTekstu::test_niepoprawne_lub_puste_zwracaja_none[]',
+    'test_parser.py::TestIntZTekstu::test_niepoprawne_lub_puste_zwracaja_none[brak]',
+    'test_parser.py::TestIntZTekstu::test_niepoprawne_lub_puste_zwracaja_none[abc]',
+    'test_parser.py::TestIntZTekstu::test_niepoprawne_lub_puste_zwracaja_none[12.5]',
+  ]},
+  { name:'TestFloatZTekstu', tests:[
+    'test_parser.py::TestFloatZTekstu::test_poprawne_wartosci[50,5-50.5]',
+    'test_parser.py::TestFloatZTekstu::test_poprawne_wartosci[80-80.0]',
+    'test_parser.py::TestFloatZTekstu::test_poprawne_wartosci[100,0-100.0]',
+    'test_parser.py::TestFloatZTekstu::test_poprawne_wartosci[0-0.0]',
+    'test_parser.py::TestFloatZTekstu::test_niepoprawne_lub_puste_zwracaja_none[]',
+    'test_parser.py::TestFloatZTekstu::test_niepoprawne_lub_puste_zwracaja_none[brak]',
+    'test_parser.py::TestFloatZTekstu::test_niepoprawne_lub_puste_zwracaja_none[abc]',
+  ]},
+];
+
+// Stan wyników per test
+let testResults = {};
+
+function buildTestList() {
+  const container = document.getElementById('tests-list');
+  container.innerHTML = TEST_GROUPS.map(g => `
+    <div class="test-group">
+      <div class="test-group-header" onclick="toggleGroup(this)">
+        <span>▾</span> ${g.name}
+        <span class="group-badge" id="badge-${g.name}">${g.tests.length}</span>
+      </div>
+      <div class="test-group-body">
+        ${g.tests.map(t => {
+          const shortName = t.split('::').pop();
+          return `
+          <div class="test-item" onclick="toggleCheck(this)">
+            <input type="checkbox" class="test-chk" data-id="${t}" onclick="event.stopPropagation();updateSelectAll()">
+            <span class="test-name" title="${t}">${shortName}</span>
+            <span class="test-status PENDING" id="ts-${CSS.escape(t)}">—</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function toggleGroup(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('span');
+  if (body.style.display === 'none') {
+    body.style.display = '';
+    arrow.textContent = '▾';
+  } else {
+    body.style.display = 'none';
+    arrow.textContent = '▸';
+  }
+}
+
+function toggleCheck(item) {
+  const chk = item.querySelector('input[type="checkbox"]');
+  chk.checked = !chk.checked;
+  updateSelectAll();
+}
+
+function toggleAllTests(checked) {
+  document.querySelectorAll('.test-chk').forEach(c => c.checked = checked);
+}
+
+function updateSelectAll() {
+  const all  = document.querySelectorAll('.test-chk');
+  const chkd = document.querySelectorAll('.test-chk:checked');
+  document.getElementById('chk-all').checked = all.length === chkd.length;
+  document.getElementById('chk-all').indeterminate = chkd.length > 0 && chkd.length < all.length;
+}
+
+function getSelectedTests() {
+  return [...document.querySelectorAll('.test-chk:checked')].map(c => c.dataset.id);
+}
+
+async function runTests(onlySelected) {
+  const tests = onlySelected ? getSelectedTests() : [];
+  if (onlySelected && tests.length === 0) {
+    alert('Zaznacz przynajmniej jeden test.');
+    return;
+  }
+
+  // Ustaw status RUNNING
+  const targets = tests.length ? tests : TEST_GROUPS.flatMap(g => g.tests);
+  targets.forEach(t => setTestStatus(t, 'RUNNING'));
+
+  document.getElementById('btn-run-all').disabled = true;
+  document.getElementById('btn-run-sel').disabled = true;
+  document.getElementById('run-summary').className = 'idle';
+  document.getElementById('run-summary').textContent = '⟳ Wykonywanie...';
+  document.getElementById('stdout-box').innerHTML = '<span style="color:var(--amber)">Uruchamianie testów...</span>';
+
+  try {
+    const resp = await fetch(`${API}/api/run-tests`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tests }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    // Aktualizuj statusy per test
+    data.tests.forEach(t => {
+      const nodeId = t.node_id.replace(/^.*test_parser\.py::/, 'test_parser.py::');
+      setTestStatus(nodeId, t.status);
+      testResults[nodeId] = t.status;
+    });
+
+    // Grupy
+    updateGroupBadges();
+
+    // Podsumowanie
+    const summary = document.getElementById('run-summary');
+    summary.textContent = data.summary || (data.returncode === 0 ? 'PASSED' : 'FAILED');
+    summary.className = data.returncode === 0 ? 'ok' : 'err';
+
+    // Output
+    renderStdout(data.stdout);
+
+  } catch(e) {
+    document.getElementById('run-summary').textContent = 'Błąd: ' + e.message;
+    document.getElementById('run-summary').className = 'err';
+    document.getElementById('stdout-box').textContent = 'Nie można połączyć z API.\nUruchom: uvicorn api:app --reload --port 8000';
+    targets.forEach(t => setTestStatus(t, 'PENDING'));
+  }
+
+  document.getElementById('btn-run-all').disabled = false;
+  document.getElementById('btn-run-sel').disabled = false;
+}
+
+function setTestStatus(nodeId, status) {
+  const el = document.getElementById('ts-' + CSS.escape(nodeId));
+  if (el) {
+    el.className = 'test-status ' + status;
+    el.textContent = status === 'PENDING' ? '—' : status;
+  }
+}
+
+function updateGroupBadges() {
+  TEST_GROUPS.forEach(g => {
+    const badge = document.getElementById('badge-' + g.name);
+    if (!badge) return;
+    const statuses = g.tests.map(t => testResults[t]).filter(Boolean);
+    const hasFail  = statuses.some(s => s === 'FAILED' || s === 'ERROR');
+    const allPass  = statuses.length === g.tests.length && statuses.every(s => s === 'PASSED');
+    badge.textContent = `${statuses.filter(s=>s==='PASSED').length}/${g.tests.length}`;
+    badge.className = 'group-badge' + (allPass ? ' all-pass' : hasFail ? ' has-fail' : '');
+  });
+}
+
+function renderStdout(text) {
+  const box = document.getElementById('stdout-box');
+  box.innerHTML = text.split('\n').map(line => {
+    let cls = 'stdout-line';
+    if (line.includes('PASSED')) cls += ' stdout-pass';
+    else if (line.includes('FAILED') || line.includes('ERROR')) cls += ' stdout-fail';
+    else if (line.includes('passed') || line.includes('warning')) cls += ' stdout-warn';
+    const esc = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<span class="${cls}">${esc}</span>`;
+  }).join('\n');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABY
+══════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   MOTYW
+══════════════════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const btn  = document.getElementById('theme-toggle');
+  if (html.dataset.theme === 'dark') {
+    html.dataset.theme = 'light';
+    btn.textContent = '☀ Light';
+  } else {
+    html.dataset.theme = 'dark';
+    btn.textContent = '☾ Dark';
+  }
+}
+
+/* ─── START ───────────────────────────────────────────────────── */
+init();
+</script>
+</body>
+</html>
