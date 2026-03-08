@@ -6,6 +6,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/)
 
 ## [Unreleased]
 
+### Dodano
+- Przelicznik ceny mieszkania — przycisk "Przelicz" obok każdego ogłoszenia otwiera popup z przeliczeniem ceny na kebaby (÷35 zł), hot-dogi Żabka (÷8,50 zł) i piwa Żabka (÷4,65 zł)
+
 ### Planowane
 - Automatyczne wykrywanie zmiany struktury HTML (ostrzeżenie przy < 10 ogłoszeń/stronę)
 - Walidacja slugu przed scrapingiem (sprawdzenie redirect HTTP)

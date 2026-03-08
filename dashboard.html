@@ -276,6 +276,7 @@ td {
 tr:hover td { background: var(--bg4); }
 td.num { text-align: right; color: var(--amber2); font-weight: 500; }
 td.locality { color: var(--cyan); }
+td.link { display: flex; align-items: center; gap: .5rem; }
 td.link a {
   color: var(--blue);
   text-decoration: none;
@@ -613,9 +614,153 @@ th:nth-child(7), td:nth-child(7) { width: auto; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ─── PRZELICZNIK MODAL ───────────────────────────────────────── */
+#przelicz-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #00000088;
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+#przelicz-overlay.open { display: flex; }
+
+#przelicz-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 2rem 2.5rem;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 8px 60px #00000090;
+  animation: modalIn .2s ease;
+  position: relative;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-16px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+#przelicz-modal .pm-close {
+  position: absolute;
+  top: .75rem; right: 1rem;
+  background: none; border: none;
+  color: var(--text2); font-size: 1.3rem;
+  cursor: pointer; line-height: 1;
+}
+#przelicz-modal .pm-close:hover { color: var(--text); }
+
+#przelicz-modal .pm-addr {
+  font-family: var(--sans);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: .25rem;
+}
+#przelicz-modal .pm-price {
+  font-family: var(--mono);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1.25rem;
+  letter-spacing: -.02em;
+}
+#przelicz-modal .pm-czyli {
+  font-family: var(--sans);
+  font-size: .75rem;
+  color: var(--text2);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: .75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+#przelicz-modal .pm-items {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  margin-bottom: 1.25rem;
+}
+#przelicz-modal .pm-item {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+}
+#przelicz-modal .pm-item .pm-emoji { font-size: 1.4rem; }
+#przelicz-modal .pm-item .pm-count {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--amber2);
+  min-width: 6ch;
+  text-align: right;
+}
+#przelicz-modal .pm-item .pm-label {
+  font-size: .85rem;
+  color: var(--text2);
+}
+#przelicz-modal .pm-tagline {
+  font-size: .8rem;
+  color: var(--text3);
+  line-height: 1.55;
+  border-top: 1px solid var(--border);
+  padding-top: .85rem;
+}
+
+.btn-przelicz {
+  background: none;
+  border: 1px solid var(--amber-dim);
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: .7rem;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+.btn-przelicz:hover {
+  background: var(--amber-dim);
+  border-color: var(--amber);
+}
 </style>
 </head>
 <body>
+
+<!-- PRZELICZNIK MODAL -->
+<div id="przelicz-overlay" onclick="zamknijPrzelicznik(event)">
+  <div id="przelicz-modal">
+    <button class="pm-close" onclick="zamknijPrzelicznik(null)">✕</button>
+    <div class="pm-addr" id="pm-locality"></div>
+    <div class="pm-price" id="pm-price"></div>
+    <div class="pm-czyli">czyli:</div>
+    <div class="pm-items">
+      <div class="pm-item">
+        <span class="pm-emoji">🥙</span>
+        <span class="pm-count" id="pm-kebab"></span>
+        <span class="pm-label">kebabów (po 35 zł)</span>
+      </div>
+      <div class="pm-item">
+        <span class="pm-emoji">🌭</span>
+        <span class="pm-count" id="pm-hotdog"></span>
+        <span class="pm-label">hot-dogów Żabka (po 8,50 zł)</span>
+      </div>
+      <div class="pm-item">
+        <span class="pm-emoji">🍺</span>
+        <span class="pm-count" id="pm-piwo"></span>
+        <span class="pm-label">piw Żabka (po 4,65 zł)</span>
+      </div>
+    </div>
+    <div class="pm-tagline">
+      Oto jak szybko jesteś w stanie przejeść lub przepić Twoje wymarzone mieszkanie. Wybór należy do Ciebie! 😄🍻🥙
+    </div>
+  </div>
+</div>
 
 <div id="loader">
   <div class="loader-logo">ADRESOWO</div>
@@ -994,7 +1139,10 @@ function renderTable() {
         <td class="num">${r.area_m2 !== null ? r.area_m2.toFixed(1) : '—'}</td>
         <td class="num">${fmt(r.price_total_zl)}</td>
         <td class="num">${fmt(r.price_per_m2_zl)}</td>
-        <td class="link"><a href="${r.url}" target="_blank" title="${r.url}">↗ otwórz</a></td>
+        <td class="link">
+          <a href="${r.url}" target="_blank" title="${r.url}">↗ otwórz</a>
+          <button class="btn-przelicz" onclick="otworzPrzelicznik(${r.price_total_zl}, ${JSON.stringify(r.locality ?? '')})">Przelicz</button>
+        </td>
       </tr>`).join('');
   }
 
@@ -1351,6 +1499,26 @@ function toggleTheme() {
     btn.textContent = '☾ Dark';
   }
 }
+
+/* ─── PRZELICZNIK ─────────────────────────────────────────────── */
+function otworzPrzelicznik(cena, lokalizacja) {
+  if (!cena) return;
+  document.getElementById('pm-locality').textContent = lokalizacja || '—';
+  document.getElementById('pm-price').textContent    = cena.toLocaleString('pl-PL') + ' zł';
+  document.getElementById('pm-kebab').textContent    = Math.floor(cena / 35).toLocaleString('pl-PL');
+  document.getElementById('pm-hotdog').textContent   = Math.floor(cena / 8.50).toLocaleString('pl-PL');
+  document.getElementById('pm-piwo').textContent     = Math.floor(cena / 4.65).toLocaleString('pl-PL');
+  document.getElementById('przelicz-overlay').classList.add('open');
+}
+
+function zamknijPrzelicznik(event) {
+  if (event && event.target !== document.getElementById('przelicz-overlay')) return;
+  document.getElementById('przelicz-overlay').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('przelicz-overlay').classList.remove('open');
+});
 
 /* ─── START ───────────────────────────────────────────────────── */
 init();
